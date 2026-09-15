@@ -1,0 +1,6 @@
+{
+  "name": "Marathon Training Tracker",
+  "description": "An 18-week marathon training tracker and workout planner with Google Sheets synchronization, pacing guidance, and progress tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
