@@ -51,8 +51,8 @@ export const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({
   const maxPlannedVolume = Math.max(...plan.map((w) => w.plannedDist), 1);
 
   // Extract unique phases present in the active plan
-  const distinctPhases = Array.from(new Set(plan.map((w) => w.phase)));
-  const phases = ['All Weeks', ...distinctPhases];
+  const distinctPhases: string[] = Array.from(new Set(plan.map((w) => w.phase)));
+  const phases: string[] = ['All Weeks', ...distinctPhases];
 
   return (
     <div className="space-y-6">
@@ -215,6 +215,7 @@ export const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({
           {phases.map((phase) => (
             <button
               key={phase}
+              id={`btn-phase-${phase.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
               type="button"
               onClick={() => onSelectPhase(phase)}
               className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${

@@ -73,10 +73,14 @@ export const generateCustomPlan = (opts: PlanGeneratorOptions): TrainingWeek[] =
   const tempoPaceStr = formatPace(gmpSeconds - 20);
   const intervalPaceStr = `${formatPace(gmpSeconds - 50)}–${formatPace(gmpSeconds - 30)}`;
 
-  // Parse start date (ensuring it's treated as local Monday or adjust to start date)
-  let start = new Date(startDateStr || new Date().toISOString().split('T')[0]);
-  if (isNaN(start.getTime())) {
-    start = new Date();
+  // Parse start date in local time to avoid UTC timezone off-by-one shifts
+  let start: Date;
+  if (startDateStr && /^\d{4}-\d{2}-\d{2}$/.test(startDateStr)) {
+    const [y, m, d] = startDateStr.split('-').map(Number);
+    start = new Date(y, m - 1, d);
+  } else {
+    const now = new Date();
+    start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   }
 
   // Taper length: 3 weeks for >= 16 weeks, 2 weeks for 10-14 weeks, 1 week for <= 8 weeks

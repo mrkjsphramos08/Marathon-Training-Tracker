@@ -5,6 +5,7 @@ import {
   Timer,
   Download,
   Sparkles,
+  Calculator,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -13,6 +14,7 @@ interface NavbarProps {
   onOpenRulesModal: () => void;
   onOpenTimerModal: () => void;
   onOpenPlanCreator: () => void;
+  onOpenPredictorModal: () => void;
   planTitle?: string;
   goalPaceLabel?: string;
   dateRangeLabel?: string;
@@ -28,6 +30,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenRulesModal,
   onOpenTimerModal,
   onOpenPlanCreator,
+  onOpenPredictorModal,
   planTitle = '18-Week Marathon Tracker',
   goalPaceLabel = 'GMP 5:40/km',
   dateRangeLabel = 'Oct 12 – Feb 14 · Periodized Training Plan',
@@ -40,7 +43,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header className="sticky top-0 z-40 bg-stone-900/95 backdrop-blur border-b border-stone-800 text-stone-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1600px] w-full mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 gap-4">
           {/* Logo & Title */}
           <div className="flex items-center gap-3">
@@ -109,6 +112,17 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Build Plan</span>
+            </button>
+
+            {/* Race Predictor Button */}
+            <button
+              id="btn-race-predictor"
+              onClick={onOpenPredictorModal}
+              title="Race Predictor & Equivalent Times"
+              className="p-2 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white border border-stone-700 transition-colors flex items-center gap-1.5 text-xs font-medium"
+            >
+              <Calculator className="w-4 h-4 text-amber-400" />
+              <span className="hidden xl:inline">Predictor</span>
             </button>
 
             {/* Quick Feature Buttons */}

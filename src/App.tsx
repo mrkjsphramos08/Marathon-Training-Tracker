@@ -15,6 +15,7 @@ import { GoldenRulesModal } from './components/GoldenRulesModal';
 import { IntervalTimerModal } from './components/IntervalTimerModal';
 import { DataBackupModal } from './components/DataBackupModal';
 import { PlanCreatorModal } from './components/PlanCreatorModal';
+import { RacePredictorModal } from './components/RacePredictorModal';
 import { calculatePacePerKm, parseDurationToSeconds, formatSecondsToDuration } from './utils/paceCalculations';
 import { exportPlanToCsv } from './utils/csvPlanParser';
 
@@ -71,10 +72,26 @@ export default function App() {
   } | null>(null);
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [isPlanCreatorOpen, setIsPlanCreatorOpen] = useState(false);
+  const [isPredictorModalOpen, setIsPredictorModalOpen] = useState(false);
+  const [initialPredictorTarget, setInitialPredictorTarget] = useState<{
+    event: 'marathon' | 'half_marathon' | '10k' | '5k';
+    hours: number;
+    minutes: number;
+  } | null>(null);
   const [isPacingModalOpen, setIsPacingModalOpen] = useState(false);
   const [isRulesModalOpen, setIsRulesModalOpen] = useState(false);
   const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
   const [selectedPhase, setSelectedPhase] = useState('All Weeks');
+
+  const handleApplyPredictorToPlan = (
+    event: 'marathon' | 'half_marathon' | '10k' | '5k',
+    hours: number,
+    minutes: number
+  ) => {
+    setInitialPredictorTarget({ event, hours, minutes });
+    setIsPredictorModalOpen(false);
+    setIsPlanCreatorOpen(true);
+  };
 
   // Save plan and metadata to localStorage whenever they update
   useEffect(() => {
@@ -305,6 +322,7 @@ export default function App() {
         onOpenRulesModal={() => setIsRulesModalOpen(true)}
         onOpenTimerModal={() => setIsTimerModalOpen(true)}
         onOpenPlanCreator={() => setIsPlanCreatorOpen(true)}
+        onOpenPredictorModal={() => setIsPredictorModalOpen(true)}
         planTitle={planMeta.title}
         goalPaceLabel={planMeta.goalPace}
         dateRangeLabel={dateRangeLabel}
@@ -315,7 +333,7 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <main className="max-w-[1600px] w-full mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Next Workout & Interactive Volume Chart */}
         <AnalyticsOverview
           plan={plan}
@@ -385,8 +403,21 @@ export default function App() {
       {/* In-App Plan Creator Wizard Modal */}
       <PlanCreatorModal
         isOpen={isPlanCreatorOpen}
-        onClose={() => setIsPlanCreatorOpen(false)}
+        onClose={() => {
+          setIsPlanCreatorOpen(false);
+          setInitialPredictorTarget(null);
+        }}
         onApplyPlan={handleApplyCustomPlan}
+        initialEvent={initialPredictorTarget?.event}
+        initialHours={initialPredictorTarget?.hours}
+        initialMinutes={initialPredictorTarget?.minutes}
+      />
+
+      {/* Race Predictor Modal */}
+      <RacePredictorModal
+        isOpen={isPredictorModalOpen}
+        onClose={() => setIsPredictorModalOpen(false)}
+        onApplyToPlanCreator={handleApplyPredictorToPlan}
       />
 
       {/* Data Backup & CSV / Excel Import Modal */}
@@ -408,10 +439,14 @@ export default function App() {
         onClose={() => setIsPacingModalOpen(false)}
       />
 
-      {/* Golden Rules Modal */}
+      {/* Golden Rules Modal (Dynamically Calibrated) */}
       <GoldenRulesModal
         isOpen={isRulesModalOpen}
         onClose={() => setIsRulesModalOpen(false)}
+        planTitle={planMeta.title}
+        goalPaceLabel={planMeta.goalPace}
+        eventName={planMeta.eventName || 'Full Marathon (42.2k)'}
+        weeksCount={plan.length}
       />
 
       {/* Interval Timer Modal */}

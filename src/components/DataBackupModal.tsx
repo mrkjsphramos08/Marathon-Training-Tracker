@@ -42,6 +42,7 @@ export const DataBackupModal: React.FC<DataBackupModalProps> = ({
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showCsvHelp, setShowCsvHelp] = useState<boolean>(false);
+  const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
 
   if (!isOpen) return null;
 
@@ -118,15 +119,10 @@ export const DataBackupModal: React.FC<DataBackupModalProps> = ({
   };
 
   const handleConfirmReset = () => {
-    if (
-      window.confirm(
-        'Are you sure you want to reset all logged runs to the default 18-week schedule? This will clear any custom imported schedule or logs.'
-      )
-    ) {
-      onResetToDefault();
-      setStatusMessage('Plan successfully reset to original 18-week schedule.');
-      setErrorMessage(null);
-    }
+    onResetToDefault();
+    setShowResetConfirm(false);
+    setStatusMessage('Plan successfully reset to original 18-week schedule.');
+    setErrorMessage(null);
   };
 
   return (
@@ -373,19 +369,51 @@ export const DataBackupModal: React.FC<DataBackupModalProps> = ({
           )}
 
           {/* Reset section */}
-          <div className="pt-4 border-t border-stone-800 flex items-center justify-between text-xs">
-            <div>
-              <div className="font-medium text-stone-300">Reset Training Plan</div>
-              <div className="text-[11px] text-stone-500">Restore the default 18-week schedule</div>
-            </div>
-            <button
-              type="button"
-              onClick={handleConfirmReset}
-              className="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 transition-colors flex items-center gap-1.5"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Reset to Default</span>
-            </button>
+          <div className="pt-4 border-t border-stone-800 text-xs">
+            {showResetConfirm ? (
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 space-y-2">
+                <div className="font-semibold text-rose-300">
+                  Are you sure you want to reset your training schedule?
+                </div>
+                <p className="text-[11px] text-stone-300">
+                  This will restore the original 18-week plan and clear any custom schedule or unsaved logs.
+                </p>
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    id="btn-confirm-reset-yes"
+                    type="button"
+                    onClick={handleConfirmReset}
+                    className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs"
+                  >
+                    Yes, Reset Schedule
+                  </button>
+                  <button
+                    id="btn-confirm-reset-cancel"
+                    type="button"
+                    onClick={() => setShowResetConfirm(false)}
+                    className="px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium text-stone-300">Reset Training Plan</div>
+                  <div className="text-[11px] text-stone-500">Restore the default 18-week schedule</div>
+                </div>
+                <button
+                  id="btn-trigger-reset"
+                  type="button"
+                  onClick={() => setShowResetConfirm(true)}
+                  className="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 transition-colors flex items-center gap-1.5"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Reset to Default</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

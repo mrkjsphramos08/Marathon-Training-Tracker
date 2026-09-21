@@ -184,6 +184,7 @@ export const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
                 </h3>
                 <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-stone-300 select-none">
                   <input
+                    id="input-log-completed"
                     type="checkbox"
                     checked={isCompleted}
                     onChange={(e) => setIsCompleted(e.target.checked)}
@@ -200,6 +201,7 @@ export const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
                     Actual Distance (km)
                   </label>
                   <input
+                    id="input-log-actual-km"
                     type="number"
                     step="0.01"
                     min="0"
@@ -216,6 +218,7 @@ export const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
                     Duration (e.g. 0:52:30 or 52:30)
                   </label>
                   <input
+                    id="input-log-duration"
                     type="text"
                     value={duration}
                     onChange={(e) => setDuration(e.target.value)}
@@ -251,6 +254,7 @@ export const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
                   </span>
                 </div>
                 <input
+                  id="input-log-rpe"
                   type="range"
                   min="1"
                   max="10"
@@ -266,6 +270,7 @@ export const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
                   Run Notes & Feedback
                 </label>
                 <textarea
+                  id="input-log-notes"
                   rows={2}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
