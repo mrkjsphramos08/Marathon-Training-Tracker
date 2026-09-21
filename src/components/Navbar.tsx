@@ -4,6 +4,7 @@ import {
   Gauge,
   Timer,
   Download,
+  Sparkles,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -11,6 +12,10 @@ interface NavbarProps {
   onOpenPacingModal: () => void;
   onOpenRulesModal: () => void;
   onOpenTimerModal: () => void;
+  onOpenPlanCreator: () => void;
+  planTitle?: string;
+  goalPaceLabel?: string;
+  dateRangeLabel?: string;
   totalPlannedKm: number;
   totalActualKm: number;
   completedRunsCount: number;
@@ -22,6 +27,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenPacingModal,
   onOpenRulesModal,
   onOpenTimerModal,
+  onOpenPlanCreator,
+  planTitle = '18-Week Marathon Tracker',
+  goalPaceLabel = 'GMP 5:40/km',
+  dateRangeLabel = 'Oct 12 – Feb 14 · Periodized Training Plan',
   totalPlannedKm,
   totalActualKm,
   completedRunsCount,
@@ -40,15 +49,17 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-lg sm:text-xl font-bold tracking-tight text-white">
-                  18-Week Marathon Tracker
+                <h1 className="text-lg sm:text-xl font-bold tracking-tight text-white line-clamp-1">
+                  {planTitle}
                 </h1>
-                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                  GMP 5:40/km
-                </span>
+                {goalPaceLabel && (
+                  <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30 whitespace-nowrap">
+                    {goalPaceLabel}
+                  </span>
+                )}
               </div>
-              <p className="text-xs text-stone-400 hidden md:block">
-                Oct 12 – Feb 14 · Race Day 42.2 km · Periodized Training Plan
+              <p className="text-xs text-stone-400 hidden md:block line-clamp-1">
+                {dateRangeLabel}
               </p>
             </div>
           </div>
@@ -88,7 +99,18 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-2.5">
+            {/* Create Plan Wizard Button */}
+            <button
+              id="btn-create-plan"
+              onClick={onOpenPlanCreator}
+              title="Create Custom Plan Wizard"
+              className="px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold transition-all flex items-center gap-1.5 text-xs shadow-sm"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Build Plan</span>
+            </button>
+
             {/* Quick Feature Buttons */}
             <button
               id="btn-pacing-calc"
@@ -97,7 +119,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="p-2 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white border border-stone-700 transition-colors flex items-center gap-1.5 text-xs font-medium"
             >
               <Gauge className="w-4 h-4 text-amber-400" />
-              <span className="hidden sm:inline">Pacing</span>
+              <span className="hidden xl:inline">Pacing</span>
             </button>
 
             <button
@@ -107,7 +129,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="p-2 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white border border-stone-700 transition-colors flex items-center gap-1.5 text-xs font-medium"
             >
               <Flame className="w-4 h-4 text-rose-400" />
-              <span className="hidden sm:inline">Rules</span>
+              <span className="hidden xl:inline">Rules</span>
             </button>
 
             <button
@@ -117,17 +139,17 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="p-2 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white border border-stone-700 transition-colors flex items-center gap-1.5 text-xs font-medium"
             >
               <Timer className="w-4 h-4 text-cyan-400" />
-              <span className="hidden sm:inline">Timer</span>
+              <span className="hidden xl:inline">Timer</span>
             </button>
 
             <button
               id="btn-backup-export"
               onClick={onOpenBackupModal}
-              title="Backup & Export CSV / JSON"
+              title="CSV Import / Export & Backup"
               className="p-2 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white border border-stone-700 transition-colors flex items-center gap-1.5 text-xs font-medium"
             >
               <Download className="w-4 h-4 text-emerald-400" />
-              <span className="hidden sm:inline">Backup</span>
+              <span className="hidden xl:inline">Import/Export</span>
             </button>
           </div>
         </div>

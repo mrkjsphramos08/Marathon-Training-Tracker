@@ -14,9 +14,24 @@ import { PacingCalculatorModal } from './components/PacingCalculatorModal';
 import { GoldenRulesModal } from './components/GoldenRulesModal';
 import { IntervalTimerModal } from './components/IntervalTimerModal';
 import { DataBackupModal } from './components/DataBackupModal';
+import { PlanCreatorModal } from './components/PlanCreatorModal';
 import { calculatePacePerKm, parseDurationToSeconds, formatSecondsToDuration } from './utils/paceCalculations';
+import { exportPlanToCsv } from './utils/csvPlanParser';
 
 const LOCAL_STORAGE_KEY = 'marathon_training_plan_v2';
+const LOCAL_STORAGE_META_KEY = 'marathon_plan_metadata_v2';
+
+interface PlanMetadata {
+  title: string;
+  goalPace: string;
+  eventName?: string;
+}
+
+const DEFAULT_META: PlanMetadata = {
+  title: '18-Week Marathon Tracker',
+  goalPace: 'GMP 5:40/km',
+  eventName: 'Full Marathon (42.2k)',
+};
 
 export default function App() {
   // Plan state
@@ -25,7 +40,7 @@ export default function App() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length === 18) {
+        if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].days) {
           return parsed;
         }
       } catch (e) {
@@ -35,21 +50,76 @@ export default function App() {
     return INITIAL_PLAN;
   });
 
+  // Plan metadata state (Title, Goal Pace)
+  const [planMeta, setPlanMeta] = useState<PlanMetadata>(() => {
+    const saved = localStorage.getItem(LOCAL_STORAGE_META_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.title) return parsed;
+      } catch (e) {
+        console.error('Failed to parse saved meta:', e);
+      }
+    }
+    return DEFAULT_META;
+  });
+
   // Modal States
   const [activeWorkout, setActiveWorkout] = useState<{
     day: DaySchedule;
     weekNumber: number;
   } | null>(null);
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
+  const [isPlanCreatorOpen, setIsPlanCreatorOpen] = useState(false);
   const [isPacingModalOpen, setIsPacingModalOpen] = useState(false);
   const [isRulesModalOpen, setIsRulesModalOpen] = useState(false);
   const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
   const [selectedPhase, setSelectedPhase] = useState('All Weeks');
 
-  // Save plan to localStorage whenever it updates
+  // Save plan and metadata to localStorage whenever they update
   useEffect(() => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(plan));
   }, [plan]);
+
+  useEffect(() => {
+    localStorage.setItem(LOCAL_STORAGE_META_KEY, JSON.stringify(planMeta));
+  }, [planMeta]);
+
+  // Apply a newly generated plan from the in-app builder
+  const handleApplyCustomPlan = (
+    newPlan: TrainingWeek[],
+    meta: { title: string; goalPace: string; eventName: string }
+  ) => {
+    setPlan(newPlan);
+    setPlanMeta({
+      title: meta.title,
+      goalPace: meta.goalPace ? `Goal ${meta.goalPace}` : 'Custom Goal',
+      eventName: meta.eventName,
+    });
+    setSelectedPhase('All Weeks');
+  };
+
+  // Import CSV Plan
+  const handleImportCsv = (importedPlan: TrainingWeek[]) => {
+    setPlan(importedPlan);
+    setPlanMeta({
+      title: `${importedPlan.length}-Week Training Plan`,
+      goalPace: 'Custom Schedule',
+      eventName: 'Imported Plan',
+    });
+    setSelectedPhase('All Weeks');
+  };
+
+  // Import JSON backup
+  const handleImportJson = (importedPlan: TrainingWeek[]) => {
+    setPlan(importedPlan);
+    setPlanMeta({
+      title: `${importedPlan.length}-Week Training Plan`,
+      goalPace: 'Custom Schedule',
+      eventName: 'Restored Plan',
+    });
+    setSelectedPhase('All Weeks');
+  };
 
   // Log workout data
   const handleSaveWorkoutLog = (loggedData: LoggedWorkoutData, completed: boolean) => {
@@ -90,9 +160,10 @@ export default function App() {
       }, 0);
 
       const totalDurationStr = totalSeconds > 0 ? formatSecondsToDuration(totalSeconds) : undefined;
-      const weeklyAvgPace = totalActualDist > 0 && totalSeconds > 0
-        ? calculatePacePerKm(totalActualDist, totalSeconds)
-        : undefined;
+      const weeklyAvgPace =
+        totalActualDist > 0 && totalSeconds > 0
+          ? calculatePacePerKm(totalActualDist, totalSeconds)
+          : undefined;
 
       return {
         ...w,
@@ -105,8 +176,8 @@ export default function App() {
 
     setPlan(updatedPlan);
 
-    // If race day completed, throw confetti celebration!
-    if (weekNumber === 18 && dayKey === 'sunday' && completed) {
+    // If final race day completed, throw confetti celebration!
+    if (weekNumber === plan.length && (dayKey === 'sunday' || dayKey === 'saturday') && completed) {
       try {
         confetti({
           particleCount: 150,
@@ -156,73 +227,37 @@ export default function App() {
 
   // Export CSV
   const handleExportCsv = () => {
-    let csvContent = 'data:text/csv;charset=utf-8,';
-    csvContent += '18 Week Marathon Training Plan,,,,,,,,,,,,,,,,\n';
-    csvContent += ',,,,,,,,,,,,,,,,\n';
-    csvContent += 'The Run Details & Pacing,,,,,,,,,,,,,,,,\n';
-    csvContent += ',Monday (Recovery): The slowest run of the week (6:45–7:00/km). Keep ego in check.\n';
-    csvContent += ',Tuesday (Aerobic/Mid-Long): A smooth easy run (6:15–6:30/km). Accumulate volume.\n';
-    csvContent += ',Thursday (Quality Workout): Alternates short fast intervals and sustained tempos (5:20/km).\n';
-    csvContent += ',Friday (Easy): Short light jog (6:30/km).\n';
-    csvContent += ',Sunday (Quality Long Run): Alternates Time on Feet and GMP blocks (5:40/km).\n';
-    csvContent += 'Golden Rules for GMP Blocks,,,,,,,,,,,,,,,,\n';
-    csvContent += ',1. Never Bank Time\n';
-    csvContent += ',2. Practice Fueling\n';
-    csvContent += ',3. Respect Warm-up\n\n';
-    csvContent += 'Week,Date (Mon),Monday (Recovery),Tuesday (Aerobic),Wednesday (Rest),Thursday (Quality),Thursday Details,Friday (Easy),Saturday (Rest),Sunday (Long Run),Sunday Details,,Planned Dist (km),Actual Dist (km),Total Duration,Avg Pace,Notes\n';
-
-    plan.forEach((w) => {
-      const row = [
-        w.weekNumber,
-        `"${w.dateMon}"`,
-        `"${w.days.monday.plannedKm} km"`,
-        `"${w.days.tuesday.plannedKm} km"`,
-        '"Rest"',
-        `"${w.days.thursday.plannedKm} km"`,
-        `"${(w.days.thursday.details || '').replace(/"/g, '""')}"`,
-        `"${w.days.friday.plannedKm} km"`,
-        '"Rest"',
-        `"${w.days.sunday.plannedKm} km"`,
-        `"${(w.days.sunday.details || '').replace(/"/g, '""')}"`,
-        '',
-        w.plannedDist,
-        w.actualDist || '',
-        w.totalDuration || '',
-        w.avgPace || '',
-        `"${(w.notes || '').replace(/"/g, '""')}"`,
-      ];
-      csvContent += row.join(',') + '\n';
-    });
-
-    const encodedUri = encodeURI(csvContent);
+    const csvContent = exportPlanToCsv(plan);
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', '18_Week_Marathon_Training_Plan.csv');
+    link.href = url;
+    link.setAttribute('download', `${planMeta.title.replace(/\s+/g, '_')}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   // Export JSON backup
   const handleExportJson = () => {
-    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(plan, null, 2));
+    const dataStr =
+      'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(plan, null, 2));
     const link = document.createElement('a');
     link.setAttribute('href', dataStr);
-    link.setAttribute('download', 'marathon_training_backup.json');
+    link.setAttribute('download', `${planMeta.title.replace(/\s+/g, '_')}_backup.json`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
-
-  // Import JSON backup
-  const handleImportJson = (importedPlan: TrainingWeek[]) => {
-    setPlan(importedPlan);
   };
 
   // Reset to default
   const handleResetToDefault = () => {
     setPlan(INITIAL_PLAN);
+    setPlanMeta(DEFAULT_META);
+    setSelectedPhase('All Weeks');
     localStorage.removeItem(LOCAL_STORAGE_KEY);
+    localStorage.removeItem(LOCAL_STORAGE_META_KEY);
   };
 
   // Overall metrics calculation
@@ -255,6 +290,12 @@ export default function App() {
     return w.phase === selectedPhase;
   });
 
+  // Date range label
+  const dateRangeLabel =
+    plan.length > 0
+      ? `${plan[0]?.dateMon} – ${plan[plan.length - 1]?.dateMon} · ${plan.length} Weeks · Periodized Training Plan`
+      : 'Periodized Training Plan';
+
   return (
     <div className="min-h-screen bg-stone-950 text-stone-100 selection:bg-amber-500 selection:text-stone-950">
       {/* Sticky Navigation Header */}
@@ -263,6 +304,10 @@ export default function App() {
         onOpenPacingModal={() => setIsPacingModalOpen(true)}
         onOpenRulesModal={() => setIsRulesModalOpen(true)}
         onOpenTimerModal={() => setIsTimerModalOpen(true)}
+        onOpenPlanCreator={() => setIsPlanCreatorOpen(true)}
+        planTitle={planMeta.title}
+        goalPaceLabel={planMeta.goalPace}
+        dateRangeLabel={dateRangeLabel}
         totalPlannedKm={totalPlannedKm}
         totalActualKm={totalActualKm}
         completedRunsCount={completedRunsCount}
@@ -280,12 +325,12 @@ export default function App() {
           onSelectPhase={setSelectedPhase}
         />
 
-        {/* 18 Weeks Schedule Section */}
+        {/* Schedule Section */}
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
             <div>
               <h2 className="text-xl font-bold text-white tracking-tight">
-                18-Week Training Schedule
+                {planMeta.title} Schedule
               </h2>
               <p className="text-xs text-stone-400">
                 Click any day to view details, pacing guidelines, or log actual miles & duration
@@ -294,7 +339,8 @@ export default function App() {
 
             <div className="flex items-center gap-3 text-xs">
               <span className="text-stone-400">
-                Showing <strong className="text-white">{filteredWeeks.length}</strong> of 18 weeks
+                Showing <strong className="text-white">{filteredWeeks.length}</strong> of{' '}
+                {plan.length} weeks
               </span>
               {selectedPhase !== 'All Weeks' && (
                 <button
@@ -336,7 +382,14 @@ export default function App() {
         />
       )}
 
-      {/* Data Backup & Export Modal */}
+      {/* In-App Plan Creator Wizard Modal */}
+      <PlanCreatorModal
+        isOpen={isPlanCreatorOpen}
+        onClose={() => setIsPlanCreatorOpen(false)}
+        onApplyPlan={handleApplyCustomPlan}
+      />
+
+      {/* Data Backup & CSV / Excel Import Modal */}
       <DataBackupModal
         isOpen={isBackupModalOpen}
         onClose={() => setIsBackupModalOpen(false)}
@@ -344,7 +397,9 @@ export default function App() {
         onExportCsv={handleExportCsv}
         onExportJson={handleExportJson}
         onImportJson={handleImportJson}
+        onImportCsv={handleImportCsv}
         onResetToDefault={handleResetToDefault}
+        onOpenPlanCreator={() => setIsPlanCreatorOpen(true)}
       />
 
       {/* Pacing Calculator Modal */}

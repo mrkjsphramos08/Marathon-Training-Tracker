@@ -29,18 +29,11 @@ export const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({
   onSelectPhase,
 }) => {
   // Find current day or upcoming workout
-  // As a smart default, pick first uncompleted workout or Week 1 Monday
   let nextWorkout: { day: DaySchedule; weekNumber: number } | null = null;
   for (const week of plan) {
-    const days = [
-      week.days.monday,
-      week.days.tuesday,
-      week.days.thursday,
-      week.days.friday,
-      week.days.sunday,
-    ];
-    for (const d of days) {
-      if (!d.completed) {
+    const daysList = Object.values(week.days) as DaySchedule[];
+    for (const d of daysList) {
+      if (d.type !== 'rest' && !d.completed) {
         nextWorkout = { day: d, weekNumber: week.weekNumber };
         break;
       }
@@ -48,83 +41,87 @@ export const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({
     if (nextWorkout) break;
   }
 
-  // If all completed, default to race day
-  if (!nextWorkout) {
-    nextWorkout = { day: plan[17].days.sunday, weekNumber: 18 };
+  // If all completed, default to last day of last week
+  if (!nextWorkout && plan.length > 0) {
+    const lastWeek = plan[plan.length - 1];
+    const sundayOrSat = lastWeek.days.sunday.plannedKm > 0 ? lastWeek.days.sunday : lastWeek.days.saturday;
+    nextWorkout = { day: sundayOrSat, weekNumber: lastWeek.weekNumber };
   }
 
-  const maxPlannedVolume = Math.max(...plan.map((w) => w.plannedDist));
+  const maxPlannedVolume = Math.max(...plan.map((w) => w.plannedDist), 1);
 
-  const phases = [
-    'All Weeks',
-    'Base & Aerobic Build',
-    'Threshold & Volume',
-    'Peak & Specificity',
-    'Taper & Race',
-  ];
+  // Extract unique phases present in the active plan
+  const distinctPhases = Array.from(new Set(plan.map((w) => w.phase)));
+  const phases = ['All Weeks', ...distinctPhases];
 
   return (
     <div className="space-y-6">
       {/* Hero Next Workout Banner */}
-      <div className="rounded-2xl bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 border border-stone-800 p-5 sm:p-6 shadow-xl relative overflow-hidden">
-        <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-amber-500/10 to-transparent pointer-events-none" />
+      {nextWorkout && (
+        <div className="rounded-2xl bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 border border-stone-800 p-5 sm:p-6 shadow-xl relative overflow-hidden">
+          <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-amber-500/10 to-transparent pointer-events-none" />
 
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5 relative z-10">
-          <div className="space-y-2 max-w-2xl">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                Next Up · Week {nextWorkout.weekNumber}
-              </span>
-              <span className="text-xs text-stone-400 font-medium">
-                {nextWorkout.day.dayName}, {nextWorkout.day.dateStr}
-              </span>
-            </div>
-
-            <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
-              {nextWorkout.day.title}
-            </h2>
-
-            <p className="text-sm text-stone-300 line-clamp-2 leading-relaxed">
-              {nextWorkout.day.details || 'Stay consistent and execute your planned pacing.'}
-            </p>
-
-            <div className="flex flex-wrap items-center gap-4 text-xs pt-1">
-              <div className="flex items-center gap-1.5 text-stone-200">
-                <MapPin className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Planned: <strong className="text-white">{nextWorkout.day.plannedKm} km</strong></span>
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5 relative z-10">
+            <div className="space-y-2 max-w-2xl">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  Next Up · Week {nextWorkout.weekNumber}
+                </span>
+                <span className="text-xs text-stone-400 font-medium">
+                  {nextWorkout.day.dayName}, {nextWorkout.day.dateStr}
+                </span>
               </div>
-              {nextWorkout.day.targetPace && (
-                <div className="flex items-center gap-1.5 text-stone-200">
-                  <Target className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Pace: <strong className="text-amber-300 font-mono">{nextWorkout.day.targetPace}</strong></span>
-                </div>
-              )}
-            </div>
-          </div>
 
-          <div className="flex items-center gap-3 w-full md:w-auto">
-            <button
-              id="btn-log-next-workout"
-              onClick={() => nextWorkout && onSelectDay(nextWorkout.day, nextWorkout.weekNumber)}
-              className="w-full md:w-auto px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg transition-all"
-            >
-              <span>Log / View Workout</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
+              <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+                {nextWorkout.day.title}
+              </h2>
+
+              <p className="text-sm text-stone-300 line-clamp-2 leading-relaxed">
+                {nextWorkout.day.details || 'Stay consistent and execute your planned pacing.'}
+              </p>
+
+              <div className="flex flex-wrap items-center gap-4 text-xs pt-1">
+                <div className="flex items-center gap-1.5 text-stone-200">
+                  <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>
+                    Planned: <strong className="text-white">{nextWorkout.day.plannedKm} km</strong>
+                  </span>
+                </div>
+                {nextWorkout.day.targetPace && (
+                  <div className="flex items-center gap-1.5 text-stone-200">
+                    <Target className="w-3.5 h-3.5 text-amber-400" />
+                    <span>
+                      Pace: <strong className="text-amber-300 font-mono">{nextWorkout.day.targetPace}</strong>
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 w-full md:w-auto">
+              <button
+                id="btn-log-next-workout"
+                onClick={() => nextWorkout && onSelectDay(nextWorkout.day, nextWorkout.weekNumber)}
+                className="w-full md:w-auto px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg transition-all"
+              >
+                <span>Log / View Workout</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* 18-Week Mileage Progression Interactive Chart */}
+      {/* Mileage Progression Interactive Periodization Chart */}
       <div className="p-5 rounded-2xl bg-stone-900/80 border border-stone-800 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-amber-400" />
-              <span>18-Week Periodization & Mileage Curve</span>
+              <span>{plan.length}-Week Periodization & Mileage Progression</span>
             </h3>
             <p className="text-xs text-stone-400">
-              Notice build-ups, scheduled cutback recovery weeks (W4, W8, W13), peak (W15), and the 3-week taper.
+              Visualizes weekly planned volume, scheduled recovery adaptation weeks, peak mileage, and the taper.
             </p>
           </div>
 
@@ -140,9 +137,14 @@ export const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({
           </div>
         </div>
 
-        {/* Visual Bar Chart */}
-        <div className="pt-4 pb-1">
-          <div className="grid grid-cols-[repeat(18,minmax(0,1fr))] gap-1 sm:gap-1.5 items-end h-32 border-b border-stone-800 pb-2">
+        {/* Dynamic Visual Bar Chart */}
+        <div className="pt-4 pb-1 overflow-x-auto">
+          <div
+            className="grid gap-1 sm:gap-1.5 items-end h-32 border-b border-stone-800 pb-2 min-w-[320px]"
+            style={{
+              gridTemplateColumns: `repeat(${plan.length}, minmax(0, 1fr))`,
+            }}
+          >
             {plan.map((w) => {
               const plannedHeight = (w.plannedDist / maxPlannedVolume) * 100;
               const loggedKm =
@@ -154,9 +156,9 @@ export const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({
                       return sum;
                     }, 0);
               const loggedHeight = Math.min(100, (loggedKm / maxPlannedVolume) * 100);
-              const isCutback = w.weekNumber === 4 || w.weekNumber === 8 || w.weekNumber === 13;
-              const isPeak = w.weekNumber === 15;
-              const isRace = w.weekNumber === 18;
+              const isRace = w.weekNumber === plan.length;
+              const isTaper = w.phase.toLowerCase().includes('taper');
+              const isPeak = w.phase.toLowerCase().includes('peak');
 
               return (
                 <div
@@ -168,8 +170,8 @@ export const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({
                     <div className="bg-stone-800 border border-stone-700 text-stone-100 text-[10px] py-1 px-2 rounded shadow-lg whitespace-nowrap">
                       <strong>W{w.weekNumber}</strong>: {w.plannedDist} km
                       {loggedKm > 0 && ` (${loggedKm.toFixed(1)}k logged)`}
-                      {isCutback && ' · Cutback'}
                       {isPeak && ' · Peak'}
+                      {isTaper && ' · Taper'}
                       {isRace && ' · Race Week!'}
                     </div>
                     <div className="w-1.5 h-1.5 bg-stone-800 rotate-45 -mt-0.5 border-r border-b border-stone-700" />
@@ -179,15 +181,15 @@ export const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({
                     {/* Planned volume background bar */}
                     <div
                       className={`w-full rounded-t transition-all ${
-                        isPeak
-                          ? 'bg-amber-500/40'
-                          : isCutback
-                          ? 'bg-blue-500/20'
-                          : isRace
+                        isRace
                           ? 'bg-emerald-500/40'
+                          : isPeak
+                          ? 'bg-amber-500/40'
+                          : isTaper
+                          ? 'bg-blue-500/30'
                           : 'bg-stone-700/60'
                       }`}
-                      style={{ height: `${plannedHeight}%` }}
+                      style={{ height: `${Math.max(4, plannedHeight)}%` }}
                     />
 
                     {/* Actual logged bar overlay */}
