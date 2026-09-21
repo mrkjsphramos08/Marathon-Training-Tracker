@@ -11,9 +11,11 @@ import {
   HelpCircle,
   FileDown,
   Sparkles,
+  ClipboardPaste,
 } from 'lucide-react';
 import { TrainingWeek } from '../types';
 import { parseCsvToPlan, generateSampleCsvTemplate } from '../utils/csvPlanParser';
+import { USER_21_WEEK_CSV } from '../data/plan21WeekData';
 
 interface DataBackupModalProps {
   isOpen: boolean;
@@ -39,12 +41,37 @@ export const DataBackupModal: React.FC<DataBackupModalProps> = ({
   onOpenPlanCreator,
 }) => {
   const [activeTab, setActiveTab] = useState<'csv' | 'json' | 'export'>('csv');
+  const [csvInputMode, setCsvInputMode] = useState<'paste' | 'upload'>('paste');
+  const [pastedCsvText, setPastedCsvText] = useState<string>('');
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showCsvHelp, setShowCsvHelp] = useState<boolean>(false);
   const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
 
   if (!isOpen) return null;
+
+  const processCsvText = (text: string) => {
+    try {
+      const result = parseCsvToPlan(text);
+
+      if (result.success && result.plan && result.plan.length > 0) {
+        onImportCsv(result.plan);
+        setStatusMessage(
+          `Success! Loaded ${result.weeksCount} training weeks (${result.totalKm} km planned).`
+        );
+        setErrorMessage(null);
+      } else {
+        setErrorMessage(
+          result.error ||
+            'Could not parse training plan from CSV. Please ensure columns match the template.'
+        );
+        setStatusMessage(null);
+      }
+    } catch (err: any) {
+      setErrorMessage('Failed to process CSV: ' + err.message);
+      setStatusMessage(null);
+    }
+  };
 
   // Handle CSV file upload
   const handleCsvFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,29 +80,23 @@ export const DataBackupModal: React.FC<DataBackupModalProps> = ({
 
     const reader = new FileReader();
     reader.onload = (e) => {
-      try {
-        const text = e.target?.result as string;
-        const result = parseCsvToPlan(text);
-
-        if (result.success && result.plan && result.plan.length > 0) {
-          onImportCsv(result.plan);
-          setStatusMessage(
-            `Success! Loaded ${result.weeksCount} training weeks (${result.totalKm} km planned).`
-          );
-          setErrorMessage(null);
-        } else {
-          setErrorMessage(
-            result.error ||
-              'Could not parse training plan from CSV. Please ensure columns match the template.'
-          );
-          setStatusMessage(null);
-        }
-      } catch (err: any) {
-        setErrorMessage('Failed to process CSV file: ' + err.message);
-        setStatusMessage(null);
-      }
+      const text = e.target?.result as string;
+      processCsvText(text);
     };
     reader.readAsText(file);
+  };
+
+  const handleImportPasted = () => {
+    if (!pastedCsvText.trim()) {
+      setErrorMessage('Please paste your CSV text into the field below first.');
+      return;
+    }
+    processCsvText(pastedCsvText);
+  };
+
+  const handleLoad21WeekPreset = () => {
+    setPastedCsvText(USER_21_WEEK_CSV);
+    processCsvText(USER_21_WEEK_CSV);
   };
 
   // Download Sample CSV Template
@@ -282,26 +303,98 @@ export const DataBackupModal: React.FC<DataBackupModalProps> = ({
                 </div>
               )}
 
-              {/* Step 2: Upload CSV */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-stone-400">
-                  2. Upload Your Populated CSV File
-                </label>
-                <label className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-dashed border-stone-700 hover:border-emerald-500/60 bg-stone-800/30 hover:bg-stone-800/60 cursor-pointer transition-colors text-center">
-                  <FileSpreadsheet className="w-7 h-7 text-emerald-400 mb-2" />
-                  <span className="text-xs font-semibold text-stone-200">
-                    Click to browse or drop your CSV file here
-                  </span>
-                  <span className="text-[11px] text-stone-500 mt-1">
-                    Accepts .csv files exported from Excel or Google Sheets
-                  </span>
-                  <input
-                    type="file"
-                    accept=".csv,.txt"
-                    onChange={handleCsvFileUpload}
-                    className="hidden"
-                  />
-                </label>
+              {/* Preset Quick Loader for 21-Week Plan */}
+              <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>21-Week Custom Marathon Plan (Sep 21, 2026 – Feb 14, 2027)</span>
+                  </div>
+                  <p className="text-[11px] text-stone-300">
+                    21 weeks · 1,048 km total · Includes all specific workouts, subtypes, and detailed workout descriptions.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleLoad21WeekPreset}
+                  className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold text-xs flex-shrink-0 shadow transition-all flex items-center justify-center gap-1.5"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5" />
+                  <span>Load 21-Week Plan</span>
+                </button>
+              </div>
+
+              {/* Step 2: Input Mode Switcher (Paste vs Upload) */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase tracking-wider text-stone-400">
+                    2. Import Your Custom Plan
+                  </label>
+                  <div className="flex items-center gap-1 bg-stone-800 p-0.5 rounded-lg border border-stone-700">
+                    <button
+                      type="button"
+                      onClick={() => setCsvInputMode('paste')}
+                      className={`px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors ${
+                        csvInputMode === 'paste'
+                          ? 'bg-emerald-500 text-stone-950'
+                          : 'text-stone-400 hover:text-stone-200'
+                      }`}
+                    >
+                      Paste CSV Text
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCsvInputMode('upload')}
+                      className={`px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors ${
+                        csvInputMode === 'upload'
+                          ? 'bg-emerald-500 text-stone-950'
+                          : 'text-stone-400 hover:text-stone-200'
+                      }`}
+                    >
+                      Upload File (.csv)
+                    </button>
+                  </div>
+                </div>
+
+                {csvInputMode === 'paste' ? (
+                  <div className="space-y-2">
+                    <textarea
+                      value={pastedCsvText}
+                      onChange={(e) => setPastedCsvText(e.target.value)}
+                      placeholder="Paste your CSV rows here (e.g. Week,Phase,Date_Mon,Mon_Type,Mon_Km,Mon_Desc...)..."
+                      className="w-full h-36 p-3 rounded-xl bg-stone-950 border border-stone-700 text-xs text-stone-200 font-mono placeholder:text-stone-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                    />
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] text-stone-500">
+                        Directly paste rows copied from your spreadsheet or text editor
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleImportPasted}
+                        className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold text-xs flex items-center gap-1.5 transition-colors shadow"
+                      >
+                        <ClipboardPaste className="w-3.5 h-3.5" />
+                        <span>Load Plan from Pasted CSV</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-dashed border-stone-700 hover:border-emerald-500/60 bg-stone-800/30 hover:bg-stone-800/60 cursor-pointer transition-colors text-center">
+                    <FileSpreadsheet className="w-7 h-7 text-emerald-400 mb-2" />
+                    <span className="text-xs font-semibold text-stone-200">
+                      Click to browse or drop your CSV file here
+                    </span>
+                    <span className="text-[11px] text-stone-500 mt-1">
+                      Accepts .csv files exported from Excel or Google Sheets
+                    </span>
+                    <input
+                      type="file"
+                      accept=".csv,.txt"
+                      onChange={handleCsvFileUpload}
+                      className="hidden"
+                    />
+                  </label>
+                )}
               </div>
             </div>
           )}

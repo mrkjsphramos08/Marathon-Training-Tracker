@@ -122,7 +122,14 @@ export const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
         <div className="p-6 space-y-6">
           {/* Title & Planned Stats */}
           <div>
-            <h2 className="text-xl font-bold text-white tracking-tight">{day.title}</h2>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <h2 className="text-xl font-bold text-white tracking-tight">{day.title}</h2>
+              {day.subtype && (
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  {day.subtype}
+                </span>
+              )}
+            </div>
             <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-stone-300">
               {day.plannedKm > 0 && (
                 <div className="flex items-center gap-1.5">

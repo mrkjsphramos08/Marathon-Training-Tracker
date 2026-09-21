@@ -17,10 +17,11 @@ import { DataBackupModal } from './components/DataBackupModal';
 import { PlanCreatorModal } from './components/PlanCreatorModal';
 import { RacePredictorModal } from './components/RacePredictorModal';
 import { calculatePacePerKm, parseDurationToSeconds, formatSecondsToDuration } from './utils/paceCalculations';
-import { exportPlanToCsv } from './utils/csvPlanParser';
+import { exportPlanToCsv, parseCsvToPlan } from './utils/csvPlanParser';
+import { USER_21_WEEK_CSV } from './data/plan21WeekData';
 
-const LOCAL_STORAGE_KEY = 'marathon_training_plan_v2';
-const LOCAL_STORAGE_META_KEY = 'marathon_plan_metadata_v2';
+const LOCAL_STORAGE_KEY = 'marathon_training_plan_v3';
+const LOCAL_STORAGE_META_KEY = 'marathon_plan_metadata_v3';
 
 interface PlanMetadata {
   title: string;
@@ -28,10 +29,14 @@ interface PlanMetadata {
   eventName?: string;
 }
 
+const PARSED_21_PLAN = parseCsvToPlan(USER_21_WEEK_CSV);
+const DEFAULT_PLAN: TrainingWeek[] =
+  PARSED_21_PLAN.success && PARSED_21_PLAN.plan ? PARSED_21_PLAN.plan : INITIAL_PLAN;
+
 const DEFAULT_META: PlanMetadata = {
-  title: '18-Week Marathon Tracker',
+  title: '21-Week Marathon Tracker',
   goalPace: 'GMP 5:40/km',
-  eventName: 'Full Marathon (42.2k)',
+  eventName: 'Race on Feb 14, 2027',
 };
 
 export default function App() {
@@ -48,7 +53,7 @@ export default function App() {
         console.error('Failed to parse saved plan:', e);
       }
     }
-    return INITIAL_PLAN;
+    return DEFAULT_PLAN;
   });
 
   // Plan metadata state (Title, Goal Pace)
@@ -276,7 +281,7 @@ export default function App() {
 
   // Reset to default
   const handleResetToDefault = () => {
-    setPlan(INITIAL_PLAN);
+    setPlan(DEFAULT_PLAN);
     setPlanMeta(DEFAULT_META);
     setSelectedPhase('All Weeks');
     localStorage.removeItem(LOCAL_STORAGE_KEY);

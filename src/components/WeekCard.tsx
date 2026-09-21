@@ -164,7 +164,7 @@ export const WeekCard: React.FC<WeekCardProps> = ({
             <div
               key={key}
               onClick={() => onSelectDay(day, week.weekNumber)}
-              className={`group relative p-3 rounded-xl border text-left cursor-pointer transition-all duration-150 flex flex-col justify-between min-h-[96px] ${getDayTypeClasses(
+              className={`group relative p-3 rounded-xl border text-left cursor-pointer transition-all duration-150 flex flex-col justify-between min-h-[118px] ${getDayTypeClasses(
                 day.type,
                 day.completed
               )}`}
@@ -195,13 +195,35 @@ export const WeekCard: React.FC<WeekCardProps> = ({
               </div>
 
               {/* Workout details */}
-              <div className="my-1">
-                <div className="text-xs font-bold leading-snug line-clamp-2">
+              <div className="my-1.5 flex-1 flex flex-col justify-start">
+                <div className="text-xs font-bold leading-snug line-clamp-2 text-white">
                   {day.type === 'rest' ? 'Rest Day' : day.title}
                 </div>
+
+                {/* Subtype Badge if provided */}
+                {day.subtype && (
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold bg-white/10 text-white/90 border border-white/10 leading-tight">
+                      {day.subtype}
+                    </span>
+                  </div>
+                )}
+
+                {/* Workout Short Description */}
+                {day.details && day.type !== 'rest' && (
+                  <p
+                    title={day.details}
+                    className="text-[10.5px] leading-tight text-stone-300 line-clamp-2 mt-1 font-normal opacity-90 group-hover:opacity-100 transition-opacity"
+                  >
+                    {day.details}
+                  </p>
+                )}
+
+                {/* Target Pace */}
                 {day.targetPace && (
-                  <div className="text-[10px] opacity-75 font-mono truncate mt-0.5">
-                    {day.targetPace}
+                  <div className="text-[10px] opacity-90 font-mono truncate mt-1 flex items-center gap-1 text-amber-300/90 font-medium">
+                    <Gauge className="w-2.5 h-2.5 shrink-0 opacity-70" />
+                    <span>{day.targetPace}</span>
                   </div>
                 )}
               </div>

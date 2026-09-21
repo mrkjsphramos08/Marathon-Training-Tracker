@@ -20,6 +20,8 @@ export interface DaySchedule {
   dateStr: string; // e.g. "Oct 12"
   fullDate?: string; // YYYY-MM-DD
   type: WorkoutType;
+  rawType?: string; // e.g. "Quality Workout (Easy Fartlek)" or "Long Run (Time on Feet)"
+  subtype?: string; // e.g. "Easy Fartlek", "Time on Feet", "Fast Finish 3k GMP"
   title: string;
   plannedKm: number;
   details?: string;

@@ -72,10 +72,10 @@ function parseCsvLine(line: string): string[] {
  */
 function normalizeWorkoutType(rawType: string, distance: number): WorkoutType {
   const t = (rawType || '').toLowerCase().trim();
-  if (distance === 0 || t.includes('rest')) return 'rest';
+  if (distance === 0 || t === 'rest' || t.startsWith('rest')) return 'rest';
   if (t.includes('recov')) return 'recovery';
   if (t.includes('aerob') || t.includes('mid-long') || t.includes('base')) return 'aerobic';
-  if (t.includes('qual') || t.includes('tempo') || t.includes('interval') || t.includes('speed') || t.includes('repeat') || t.includes('threshold')) return 'quality';
+  if (t.includes('qual') || t.includes('tempo') || t.includes('interval') || t.includes('speed') || t.includes('repeat') || t.includes('threshold') || t.includes('fartlek')) return 'quality';
   if (t.includes('long') || t.includes('marathon') || t.includes('race')) return 'long_run';
   if (t.includes('easy') || t.includes('shake')) return 'easy';
   
@@ -86,17 +86,81 @@ function normalizeWorkoutType(rawType: string, distance: number): WorkoutType {
 }
 
 /**
- * Attempts to extract target pace from text (e.g. "5:40/km", "6:15-6:30/km", "@ 5:20").
+ * Extracts specific workout subtype, e.g. "(Easy Fartlek)" -> "Easy Fartlek", "(Time on Feet)" -> "Time on Feet".
  */
-function extractTargetPace(desc: string): string | undefined {
-  if (!desc) return undefined;
-  const matchRange = desc.match(/(\d+:\d+)\s*(?:–|-|to)\s*(\d+:\d+)\s*(?:\/km)?/i);
+function extractSubtype(rawType: string): string | undefined {
+  if (!rawType) return undefined;
+  const parenMatch = rawType.match(/\(([^)]+)\)/);
+  if (parenMatch && parenMatch[1].trim()) {
+    return parenMatch[1].trim();
+  }
+  const clean = rawType.trim();
+  if (/test\s*race/i.test(clean)) return 'Test Race';
+  if (/race\s*day/i.test(clean)) return 'Goal Race';
+  if (/shakeout/i.test(clean)) return 'Shakeout';
+  if (/fartlek/i.test(clean)) return 'Fartlek';
+  if (/tempo/i.test(clean)) return 'Tempo';
+  if (/interval/i.test(clean)) return 'Intervals';
+  return undefined;
+}
+
+/**
+ * Derives a clean, descriptive display title for the workout.
+ */
+function deriveWorkoutTitle(rawType: string, type: WorkoutType, km: number, subtype?: string): string {
+  const trimmed = (rawType || '').trim();
+  if (trimmed) {
+    if (trimmed.toLowerCase() === 'rest') return 'Rest Day';
+    return trimmed;
+  }
+  if (km === 0 || type === 'rest') return 'Rest Day';
+  if (subtype) return `${type === 'quality' ? 'Quality' : type === 'long_run' ? 'Long Run' : type}: ${subtype}`;
+  return `${km} km ${type.replace('_', ' ')}`;
+}
+
+/**
+ * Formats individual dates for each day of the week from the Monday starting date string.
+ */
+function getDayDate(mondayStr: string, dayIndex: number): { dateStr: string; fullDate?: string } {
+  if (!mondayStr) return { dateStr: '' };
+  const trimmed = mondayStr.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    const [y, m, d] = trimmed.split('-').map(Number);
+    const date = new Date(Date.UTC(y, m - 1, d + dayIndex));
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthStr = months[date.getUTCMonth()];
+    const dayNum = date.getUTCDate();
+    const iso = date.toISOString().split('T')[0];
+    return {
+      dateStr: `${monthStr} ${dayNum}`,
+      fullDate: iso,
+    };
+  }
+  return {
+    dateStr: trimmed,
+  };
+}
+
+/**
+ * Attempts to extract target pace from description or type text (e.g. "5:40/km", "6:15-6:30/km", "@ 5:20", "GMP").
+ */
+function extractTargetPace(desc: string, rawType?: string): string | undefined {
+  const combined = `${desc || ''} ${rawType || ''}`;
+  if (!combined.trim()) return undefined;
+  
+  // Check range first (e.g. 6:15-6:30/km, 6:30–7:00 /km)
+  const matchRange = combined.match(/(\d+:\d+)\s*(?:–|-|to)\s*(\d+:\d+)\s*(?:\/km)?/i);
   if (matchRange) {
     return `${matchRange[1]}–${matchRange[2]}/km`;
   }
-  const matchSingle = desc.match(/(?:@\s*|pace\s*:?\s*)?(\d+:\d+)\s*(?:\/km)?/i);
+  // Check single pace (e.g. 5:40/km, @ 5:20)
+  const matchSingle = combined.match(/(?:@\s*|pace\s*:?\s*|into\s*(?:your)?\s*)?(\d+:\d+)\s*(?:\/km)?/i);
   if (matchSingle) {
     return `${matchSingle[1]}/km`;
+  }
+  // Check Goal Marathon Pace mentions
+  if (/gmp|goal\s*marathon\s*pace/i.test(combined)) {
+    return '5:40/km (GMP)';
   }
   return undefined;
 }
@@ -168,11 +232,19 @@ export const parseCsvToPlan = (csvContent: string): ParseResult => {
 
     // Normalize phase
     let phase: TrainingWeek['phase'] = 'Base & Aerobic Build';
-    const pl = phaseStr.toLowerCase();
+    const pl = phaseStr.toLowerCase().trim();
     if (pl.includes('taper') || pl.includes('race')) phase = 'Taper & Race';
     else if (pl.includes('peak') || pl.includes('specif')) phase = 'Peak & Specificity';
-    else if (pl.includes('thresh') || pl.includes('volume')) phase = 'Threshold & Volume';
+    else if (pl.includes('thresh') || pl.includes('volume') || pl === 'build' || (pl.includes('build') && !pl.includes('base') && !pl.includes('aerob'))) phase = 'Threshold & Volume';
     else phase = 'Base & Aerobic Build';
+
+    // Formatted week header date display (e.g. "Sep 21 – Sep 27" if YYYY-MM-DD)
+    let displayWeekDate = dateMon;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateMon.trim())) {
+      const monDate = getDayDate(dateMon, 0).dateStr;
+      const sunDate = getDayDate(dateMon, 6).dateStr;
+      displayWeekDate = `${monDate} – ${sunDate}`;
+    }
 
     // Handle columns mapping:
     // Format A: Mon_Type, Mon_Km, Mon_Desc, Tue_Type, Tue_Km, Tue_Desc, ... (3 cols per day)
@@ -184,20 +256,27 @@ export const parseCsvToPlan = (csvContent: string): ParseResult => {
       // Standard 24-col format: Week(0), Phase(1), Date_Mon(2), Mon(3,4,5), Tue(6,7,8), Wed(9,10,11), Thu(12,13,14), Fri(15,16,17), Sat(18,19,20), Sun(21,22,23), Notes(24)
       const parseDay = (
         dayName: DaySchedule['dayName'],
+        dayIndex: number,
         typeCol: string,
         kmCol: string,
         descCol: string
       ): DaySchedule => {
         const km = parseFloat(kmCol) || 0;
         const type = normalizeWorkoutType(typeCol, km);
-        const details = descCol || (km > 0 ? `${km} km ${type.replace('_', ' ')}` : 'Rest and recover');
-        const targetPace = extractTargetPace(details);
+        const subtype = extractSubtype(typeCol);
+        const title = deriveWorkoutTitle(typeCol, type, km, subtype);
+        const details = (descCol || '').trim() || (km > 0 ? `${km} km ${type.replace('_', ' ')}` : 'Rest and recover');
+        const targetPace = extractTargetPace(details, typeCol);
+        const { dateStr, fullDate } = getDayDate(dateMon, dayIndex);
 
         return {
           dayName,
-          dateStr: dateMon,
+          dateStr: dateStr || dateMon,
+          fullDate,
           type,
-          title: km > 0 ? `${km} km ${type.replace('_', ' ')}` : 'Rest Day',
+          rawType: (typeCol || '').trim(),
+          subtype,
+          title,
           plannedKm: km,
           details,
           targetPace,
@@ -206,46 +285,54 @@ export const parseCsvToPlan = (csvContent: string): ParseResult => {
       };
 
       days = {
-        monday: parseDay('Monday', cols[3], cols[4], cols[5]),
-        tuesday: parseDay('Tuesday', cols[6], cols[7], cols[8]),
-        wednesday: parseDay('Wednesday', cols[9], cols[10], cols[11]),
-        thursday: parseDay('Thursday', cols[12], cols[13], cols[14]),
-        friday: parseDay('Friday', cols[15], cols[16], cols[17]),
-        saturday: parseDay('Saturday', cols[18], cols[19], cols[20]),
-        sunday: parseDay('Sunday', cols[21], cols[22], cols[23]),
+        monday: parseDay('Monday', 0, cols[3], cols[4], cols[5]),
+        tuesday: parseDay('Tuesday', 1, cols[6], cols[7], cols[8]),
+        wednesday: parseDay('Wednesday', 2, cols[9], cols[10], cols[11]),
+        thursday: parseDay('Thursday', 3, cols[12], cols[13], cols[14]),
+        friday: parseDay('Friday', 4, cols[15], cols[16], cols[17]),
+        saturday: parseDay('Saturday', 5, cols[18], cols[19], cols[20]),
+        sunday: parseDay('Sunday', 6, cols[21], cols[22], cols[23]),
       };
     } else {
       // Simpler columns fallback (e.g. Week, Date, Mon_Km, Tue_Km, Wed_Km, Thu_Km, Fri_Km, Sat_Km, Sun_Km, Notes)
       const parseSimpleDay = (
         dayName: DaySchedule['dayName'],
+        dayIndex: number,
         rawVal: string,
         fallbackType: WorkoutType
       ): DaySchedule => {
         const numMatch = (rawVal || '').match(/(\d+(?:\.\d+)?)/);
         const km = numMatch ? parseFloat(numMatch[1]) : 0;
         const type = km === 0 ? 'rest' : normalizeWorkoutType(rawVal, km) || fallbackType;
-        const targetPace = extractTargetPace(rawVal);
+        const subtype = extractSubtype(rawVal);
+        const title = deriveWorkoutTitle(rawVal, type, km, subtype);
+        const details = rawVal || (km > 0 ? `${km} km workout` : 'Rest and recover');
+        const targetPace = extractTargetPace(details, rawVal);
+        const { dateStr, fullDate } = getDayDate(dateMon, dayIndex);
 
         return {
           dayName,
-          dateStr: dateMon,
+          dateStr: dateStr || dateMon,
+          fullDate,
           type,
-          title: km > 0 ? `${km} km ${type.replace('_', ' ')}` : 'Rest Day',
+          rawType: (rawVal || '').trim(),
+          subtype,
+          title,
           plannedKm: km,
-          details: rawVal || (km > 0 ? `${km} km workout` : 'Rest and recover'),
+          details,
           targetPace,
           completed: false,
         };
       };
 
       days = {
-        monday: parseSimpleDay('Monday', cols[2] || cols[3] || '', 'recovery'),
-        tuesday: parseSimpleDay('Tuesday', cols[3] || cols[4] || '', 'aerobic'),
-        wednesday: parseSimpleDay('Wednesday', cols[4] || cols[5] || '', 'rest'),
-        thursday: parseSimpleDay('Thursday', cols[5] || cols[6] || '', 'quality'),
-        friday: parseSimpleDay('Friday', cols[6] || cols[7] || '', 'easy'),
-        saturday: parseSimpleDay('Saturday', cols[7] || cols[8] || '', 'rest'),
-        sunday: parseSimpleDay('Sunday', cols[8] || cols[9] || '', 'long_run'),
+        monday: parseSimpleDay('Monday', 0, cols[2] || cols[3] || '', 'recovery'),
+        tuesday: parseSimpleDay('Tuesday', 1, cols[3] || cols[4] || '', 'aerobic'),
+        wednesday: parseSimpleDay('Wednesday', 2, cols[4] || cols[5] || '', 'rest'),
+        thursday: parseSimpleDay('Thursday', 3, cols[5] || cols[6] || '', 'quality'),
+        friday: parseSimpleDay('Friday', 4, cols[6] || cols[7] || '', 'easy'),
+        saturday: parseSimpleDay('Saturday', 5, cols[7] || cols[8] || '', 'rest'),
+        sunday: parseSimpleDay('Sunday', 6, cols[8] || cols[9] || '', 'long_run'),
       };
     }
 
@@ -257,7 +344,7 @@ export const parseCsvToPlan = (csvContent: string): ParseResult => {
 
     parsedWeeks.push({
       weekNumber,
-      dateMon,
+      dateMon: displayWeekDate,
       plannedDist,
       phase,
       notes: notes.startsWith('Week') || notes.startsWith('#') ? '' : notes,
@@ -293,25 +380,25 @@ export const exportPlanToCsv = (plan: TrainingWeek[]): string => {
       w.weekNumber,
       clean(w.phase),
       clean(w.dateMon),
-      d.monday.type,
+      clean(d.monday.rawType || d.monday.title || d.monday.type),
       d.monday.plannedKm,
       clean(d.monday.details || d.monday.title),
-      d.tuesday.type,
+      clean(d.tuesday.rawType || d.tuesday.title || d.tuesday.type),
       d.tuesday.plannedKm,
       clean(d.tuesday.details || d.tuesday.title),
-      d.wednesday.type,
+      clean(d.wednesday.rawType || d.wednesday.title || d.wednesday.type),
       d.wednesday.plannedKm,
       clean(d.wednesday.details || d.wednesday.title),
-      d.thursday.type,
+      clean(d.thursday.rawType || d.thursday.title || d.thursday.type),
       d.thursday.plannedKm,
       clean(d.thursday.details || d.thursday.title),
-      d.friday.type,
+      clean(d.friday.rawType || d.friday.title || d.friday.type),
       d.friday.plannedKm,
       clean(d.friday.details || d.friday.title),
-      d.saturday.type,
+      clean(d.saturday.rawType || d.saturday.title || d.saturday.type),
       d.saturday.plannedKm,
       clean(d.saturday.details || d.saturday.title),
-      d.sunday.type,
+      clean(d.sunday.rawType || d.sunday.title || d.sunday.type),
       d.sunday.plannedKm,
       clean(d.sunday.details || d.sunday.title),
       clean(w.notes),
