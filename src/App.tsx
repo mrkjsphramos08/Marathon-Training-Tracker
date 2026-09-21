@@ -105,7 +105,13 @@ export default function App() {
   // Apply a newly generated plan from the in-app builder
   const handleApplyCustomPlan = (
     newPlan: TrainingWeek[],
-    meta: { title: string; goalPace: string; eventName: string }
+    meta: {
+      title: string;
+      goalPace: string;
+      eventName: string;
+      startDate?: string;
+      raceDate?: string;
+    }
   ) => {
     setPlan(newPlan);
     setPlanMeta({
@@ -307,10 +313,17 @@ export default function App() {
     return w.phase === selectedPhase;
   });
 
-  // Date range label
+  // Date range and race day label
+  const startDayStr = plan[0]?.days?.monday?.dateStr || plan[0]?.dateMon;
+  const lastWeek = plan[plan.length - 1];
+  const raceDayStr =
+    lastWeek?.days?.sunday?.type !== 'rest'
+      ? lastWeek?.days?.sunday?.dateStr
+      : lastWeek?.days?.saturday?.dateStr || lastWeek?.days?.sunday?.dateStr || lastWeek?.dateMon;
+
   const dateRangeLabel =
     plan.length > 0
-      ? `${plan[0]?.dateMon} – ${plan[plan.length - 1]?.dateMon} · ${plan.length} Weeks · Periodized Training Plan`
+      ? `${startDayStr} → ${raceDayStr} · ${plan.length} Weeks`
       : 'Periodized Training Plan';
 
   return (

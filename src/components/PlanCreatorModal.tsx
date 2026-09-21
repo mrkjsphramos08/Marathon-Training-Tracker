@@ -14,6 +14,11 @@ import {
   Calculator,
   ArrowRight,
   Check,
+  Plus,
+  Minus,
+  CheckCircle2,
+  RefreshCw,
+  Flag,
 } from 'lucide-react';
 import { TrainingWeek, DaySchedule } from '../types';
 import { generateCustomPlan, PlanGeneratorOptions } from '../utils/planGenerator';
@@ -22,13 +27,26 @@ import {
   predictRaceTime,
   parseTimeToSeconds,
 } from '../utils/racePredictor';
+import {
+  getUpcomingMonday,
+  calculateRaceDateFromStart,
+  calculateStartDateFromRace,
+  calculateWeeksBetween,
+  formatPrettyDate,
+} from '../utils/datePlanSync';
 
 interface PlanCreatorModalProps {
   isOpen: boolean;
   onClose: () => void;
   onApplyPlan: (
     newPlan: TrainingWeek[],
-    meta: { title: string; goalPace: string; eventName: string }
+    meta: {
+      title: string;
+      goalPace: string;
+      eventName: string;
+      startDate?: string;
+      raceDate?: string;
+    }
   ) => void;
   initialEvent?: 'marathon' | 'half_marathon' | '10k' | '5k';
   initialHours?: number;
@@ -60,37 +78,75 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
   const [prevSeconds, setPrevSeconds] = useState<number>(0);
   const [appliedPredictionNotice, setAppliedPredictionNotice] = useState<string | null>(null);
 
-  // Default start date: upcoming Monday
-  const getNextMonday = () => {
-    const d = new Date();
-    const day = d.getDay();
-    const diff = (day === 0 ? 1 : 8 - day);
-    d.setDate(d.getDate() + diff);
-    return d.toISOString().split('T')[0];
+  // Start Date (Monday) and Race Date (Sunday / Saturday of final week)
+  const [startDateStr, setStartDateStr] = useState<string>(getUpcomingMonday());
+  const [raceDateStr, setRaceDateStr] = useState<string>(() =>
+    calculateRaceDateFromStart(getUpcomingMonday(), 18, 'sunday')
+  );
+  const [dateSyncNotice, setDateSyncNotice] = useState<string | null>(null);
+
+  // Sync when start date changes
+  const handleStartDateChange = (newStart: string) => {
+    setStartDateStr(newStart);
+    if (!newStart) return;
+    const newRace = calculateRaceDateFromStart(newStart, weeksCount, longRunDay);
+    setRaceDateStr(newRace);
+    setDateSyncNotice(`Race day moved to ${formatPrettyDate(newRace)} (${weeksCount}w plan).`);
   };
 
-  const [startDateStr, setStartDateStr] = useState<string>(getNextMonday());
+  // Sync when race date changes: auto-adjust weeks count (e.g. 19 or 21 weeks) and align start date
+  const handleRaceDateChange = (newRace: string) => {
+    setRaceDateStr(newRace);
+    if (!newRace) return;
+    const { exactWeeks, calendarDays } = calculateWeeksBetween(startDateStr, newRace);
+    setWeeksCount(exactWeeks);
+    const alignedStart = calculateStartDateFromRace(newRace, exactWeeks, longRunDay);
+    setStartDateStr(alignedStart);
+    setDateSyncNotice(
+      `✓ Builder auto-adjusted plan to ${exactWeeks} weeks (${calendarDays} days)! Start: ${formatPrettyDate(alignedStart)} → Race: ${formatPrettyDate(newRace)}`
+    );
+  };
+
+  // Sync when weeks count changes: recalculate race date so everything tallies
+  const handleWeeksCountChange = (newWeeks: number) => {
+    const clamped = Math.max(4, Math.min(36, newWeeks));
+    setWeeksCount(clamped);
+    const newRace = calculateRaceDateFromStart(startDateStr, clamped, longRunDay);
+    setRaceDateStr(newRace);
+    setDateSyncNotice(`✓ Tallies: ${clamped} Weeks (Race: ${formatPrettyDate(newRace)})`);
+  };
+
+  // Sync when long run day changes
+  const handleLongRunDayChange = (newLongRunDay: 'sunday' | 'saturday') => {
+    setLongRunDay(newLongRunDay);
+    const newRace = calculateRaceDateFromStart(startDateStr, weeksCount, newLongRunDay);
+    setRaceDateStr(newRace);
+  };
 
   // Default finish times per event
   const handleSelectEvent = (newEvent: 'marathon' | 'half_marathon' | '10k' | '5k') => {
     setEvent(newEvent);
+    let newWeeks = 18;
     if (newEvent === 'marathon') {
       setGoalHours(3);
       setGoalMinutes(45);
-      setWeeksCount(18);
+      newWeeks = 18;
     } else if (newEvent === 'half_marathon') {
       setGoalHours(1);
       setGoalMinutes(45);
-      setWeeksCount(14);
+      newWeeks = 14;
     } else if (newEvent === '10k') {
       setGoalHours(0);
       setGoalMinutes(48);
-      setWeeksCount(10);
+      newWeeks = 10;
     } else if (newEvent === '5k') {
       setGoalHours(0);
       setGoalMinutes(23);
-      setWeeksCount(8);
+      newWeeks = 8;
     }
+    setWeeksCount(newWeeks);
+    const newRace = calculateRaceDateFromStart(startDateStr, newWeeks, longRunDay);
+    setRaceDateStr(newRace);
   };
 
   // Event distance
@@ -387,59 +443,151 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
                 </div>
               </div>
 
-              {/* Step 3: Plan Length & Start Date */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1.5">
+              {/* Step 3: Plan Duration & Custom Weeks */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
                   <label className="text-xs font-bold uppercase tracking-wider text-stone-300 flex items-center gap-1.5">
                     <Layers className="w-3.5 h-3.5 text-amber-400" />
                     <span>3. Plan Duration</span>
                   </label>
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {[8, 10, 12, 14, 16, 18, 20, 24].map((num) => (
-                      <button
-                        key={num}
-                        id={`plan-weeks-${num}`}
-                        type="button"
-                        onClick={() => setWeeksCount(num)}
-                        className={`py-1.5 text-xs font-bold rounded-lg border transition-all ${
-                          weeksCount === num
-                            ? 'bg-amber-500 text-stone-950 border-amber-500 shadow-sm'
-                            : 'bg-stone-950/60 border-stone-800 text-stone-300 hover:bg-stone-800'
-                        }`}
-                      >
-                        {num}w
-                      </button>
-                    ))}
+                  <div className="flex items-center gap-1.5 bg-stone-950/80 px-2 py-0.5 rounded-lg border border-stone-800">
+                    <button
+                      type="button"
+                      id="btn-decrement-weeks"
+                      onClick={() => handleWeeksCountChange(weeksCount - 1)}
+                      className="p-1 rounded text-stone-400 hover:text-white hover:bg-stone-800 transition-colors"
+                      title="Decrease weeks"
+                    >
+                      <Minus className="w-3 h-3" />
+                    </button>
+                    <input
+                      id="input-custom-weeks"
+                      type="number"
+                      min="4"
+                      max="36"
+                      value={weeksCount}
+                      onChange={(e) => handleWeeksCountChange(parseInt(e.target.value) || 12)}
+                      className="w-8 text-center text-xs font-bold text-amber-400 bg-transparent font-mono outline-none"
+                    />
+                    <span className="text-[11px] text-stone-400">wks</span>
+                    <button
+                      type="button"
+                      id="btn-increment-weeks"
+                      onClick={() => handleWeeksCountChange(weeksCount + 1)}
+                      className="p-1 rounded text-stone-400 hover:text-white hover:bg-stone-800 transition-colors"
+                      title="Increase weeks"
+                    >
+                      <Plus className="w-3 h-3" />
+                    </button>
                   </div>
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="grid grid-cols-5 sm:grid-cols-10 gap-1">
+                  {[8, 10, 12, 14, 16, 18, 19, 20, 21, 24].map((num) => (
+                    <button
+                      key={num}
+                      id={`plan-weeks-${num}`}
+                      type="button"
+                      onClick={() => handleWeeksCountChange(num)}
+                      className={`py-1.5 text-xs font-bold rounded-lg border transition-all ${
+                        weeksCount === num
+                          ? 'bg-amber-500 text-stone-950 border-amber-500 shadow-sm'
+                          : 'bg-stone-950/60 border-stone-800 text-stone-300 hover:bg-stone-800'
+                      }`}
+                    >
+                      {num}w
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Step 4: Coordinated Start Date & Race Date (Full Calendar Sync) */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
                   <label className="text-xs font-bold uppercase tracking-wider text-stone-300 flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5 text-amber-400" />
-                    <span>4. Start Date & Long Run</span>
+                    <span>4. Start Date & Race Date</span>
                   </label>
-                  <div className="flex gap-2">
+                  <span className="text-[11px] text-stone-400">
+                    Long run day:{' '}
+                    <select
+                      id="select-long-run-day"
+                      value={longRunDay}
+                      onChange={(e) => handleLongRunDayChange(e.target.value as any)}
+                      className="bg-stone-900 border border-stone-700/80 rounded px-1.5 py-0.5 text-[11px] text-amber-400 font-semibold focus:outline-none"
+                    >
+                      <option value="sunday">Sunday (Race)</option>
+                      <option value="saturday">Saturday (Race)</option>
+                    </select>
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <div className="text-[11px] font-semibold text-stone-400 flex items-center gap-1">
+                      <Calendar className="w-3 h-3 text-stone-400" />
+                      <span>Start Date (Week 1 Mon)</span>
+                    </div>
                     <input
                       id="input-start-date"
                       type="date"
                       value={startDateStr}
-                      onChange={(e) => setStartDateStr(e.target.value)}
-                      className="bg-stone-950/80 border border-stone-700/80 rounded-xl px-2.5 py-1.5 text-xs text-stone-200 focus:outline-none flex-1 font-mono"
+                      onChange={(e) => handleStartDateChange(e.target.value)}
+                      className="w-full bg-stone-950/80 border border-stone-700/80 rounded-xl px-2.5 py-1.5 text-xs text-stone-200 focus:outline-none font-mono focus:border-amber-500"
                     />
-                    <select
-                      id="select-long-run-day"
-                      value={longRunDay}
-                      onChange={(e) => setLongRunDay(e.target.value as any)}
-                      className="bg-stone-950/80 border border-stone-700/80 rounded-xl px-2 py-1.5 text-xs text-stone-200 focus:outline-none"
-                    >
-                      <option value="sunday">Sun Long</option>
-                      <option value="saturday">Sat Long</option>
-                    </select>
                   </div>
+
+                  <div className="space-y-1">
+                    <div className="text-[11px] font-semibold text-amber-400 flex items-center gap-1">
+                      <Trophy className="w-3 h-3 text-amber-400" />
+                      <span>Race Date (Goal Event)</span>
+                    </div>
+                    <input
+                      id="input-race-date"
+                      type="date"
+                      value={raceDateStr}
+                      onChange={(e) => handleRaceDateChange(e.target.value)}
+                      className="w-full bg-stone-950/80 border border-amber-500/40 rounded-xl px-2.5 py-1.5 text-xs text-amber-300 focus:outline-none font-mono focus:border-amber-400"
+                    />
+                  </div>
+                </div>
+
+                {/* Live Synchronization & Tallying Status */}
+                <div className="p-2 rounded-xl bg-stone-950/90 border border-stone-800 text-[11px] space-y-1">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <div className="flex items-center gap-1.5 text-stone-300">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>
+                        <strong className="text-emerald-400 font-semibold">{weeksCount} Weeks</strong> tallies:{' '}
+                        <span className="text-white font-mono">{formatPrettyDate(startDateStr)}</span> →{' '}
+                        <span className="text-amber-400 font-mono font-semibold">{formatPrettyDate(raceDateStr)}</span>
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      id="btn-sync-to-race"
+                      onClick={() => {
+                        const alignedStart = calculateStartDateFromRace(raceDateStr, weeksCount, longRunDay);
+                        setStartDateStr(alignedStart);
+                        setDateSyncNotice(`Start date aligned to ${weeksCount}w before race day (${formatPrettyDate(alignedStart)}).`);
+                      }}
+                      className="text-[10px] text-amber-400 hover:text-amber-300 font-medium underline flex items-center gap-1 shrink-0"
+                      title="Keep race date and recalculate start date"
+                    >
+                      <RefreshCw className="w-2.5 h-2.5" />
+                      Sync Start to Race
+                    </button>
+                  </div>
+                  {dateSyncNotice && (
+                    <div className="text-[10px] text-amber-300/90 font-mono flex items-center justify-between pt-0.5 border-t border-stone-800/60">
+                      <span>{dateSyncNotice}</span>
+                      <button type="button" onClick={() => setDateSyncNotice(null)} className="text-stone-400 hover:text-white ml-2">✕</button>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Step 4: Runner Level & Frequency */}
+              {/* Step 5: Runner Level & Frequency */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold uppercase tracking-wider text-stone-300">
@@ -539,6 +687,21 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
                 </div>
               </div>
 
+              {/* Schedule Timeline Highlight */}
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-stone-900/90 border border-stone-800 text-xs">
+                <div>
+                  <span className="text-[10px] uppercase font-semibold text-stone-400 block">Kickoff (Week 1)</span>
+                  <span className="text-white font-mono font-bold text-xs">{formatPrettyDate(startDateStr)}</span>
+                </div>
+                <div className="text-center px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 font-bold font-mono text-xs">
+                  {weeksCount} Weeks
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] uppercase font-semibold text-stone-400 block">Race Day (Week {weeksCount})</span>
+                  <span className="text-amber-400 font-mono font-bold text-xs">{formatPrettyDate(raceDateStr)}</span>
+                </div>
+              </div>
+
               {/* Periodization Timeline Visualizer */}
               <div className="p-3 rounded-xl bg-stone-900/70 border border-stone-800/80 space-y-1.5">
                 <span className="text-[11px] font-semibold text-stone-300 block">
@@ -552,7 +715,7 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
                     ⚡ Build ({Math.round(weeksCount * 0.3)}w)
                   </div>
                   <div className="flex-1 p-1.5 rounded bg-rose-500/10 border border-rose-500/20 text-rose-300 text-center">
-                    🔥 Peak ({Math.max(1, weeksCount - Math.round(weeksCount * 0.35) - Math.round(weeksCount * 0.3) - (weeksCount >= 16 ? 3 : 2))}w)
+                    🔥 Peak ({Math.max(1, weeksCount - Math.round(weeksCount * 0.35) - Math.round(weeksCount * 0.3) - (weeksCount >= 16 ? 3 : weeksCount >= 10 ? 2 : 1))}w)
                   </div>
                   <div className="flex-1 p-1.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-center">
                     🏁 Taper ({weeksCount >= 16 ? 3 : weeksCount >= 10 ? 2 : 1}w)
