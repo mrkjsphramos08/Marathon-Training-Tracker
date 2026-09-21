@@ -243,22 +243,22 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div
         id="plan-creator-modal-container"
-        className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-6xl shadow-2xl text-stone-100 flex flex-col max-h-[96vh] overflow-hidden"
+        className="bg-[#12161F] border border-white/[0.08] rounded-2xl w-full max-w-6xl shadow-2xl text-slate-100 flex flex-col max-h-[96vh] overflow-hidden"
       >
         {/* Header Bar */}
-        <div className="px-5 py-3.5 border-b border-stone-800 flex items-center justify-between flex-shrink-0 bg-stone-900/95">
+        <div className="px-5 py-3.5 border-b border-white/[0.08] flex items-center justify-between flex-shrink-0 bg-[#12161F]/95">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
+            <div className="w-8 h-8 rounded-xl bg-amber-400/10 text-amber-400 flex items-center justify-center border border-amber-400/20">
               <Sparkles className="w-4 h-4" />
             </div>
             <div>
               <h2 className="text-base font-bold text-white flex items-center gap-2 leading-none">
                 <span>Training Plan Builder & Periodizer</span>
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-amber-400/10 text-amber-300 border border-amber-400/20">
                   Evidence-Based 80/20
                 </span>
               </h2>
-              <p className="text-xs text-stone-400 mt-0.5">
+              <p className="text-xs text-slate-400 mt-0.5">
                 Build a tailored, periodized schedule calibrated to your current fitness and target finish time
               </p>
             </div>
@@ -271,8 +271,8 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
               onClick={() => setShowPredictorBar(!showPredictorBar)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
                 showPredictorBar
-                  ? 'bg-amber-500 text-stone-950 font-bold'
-                  : 'bg-stone-800 hover:bg-stone-700 text-stone-300 border border-stone-700'
+                  ? 'bg-amber-400 text-slate-950 font-bold shadow-sm'
+                  : 'bg-[#181E2A] hover:bg-[#1E2536] text-slate-300 border border-white/[0.08]'
               }`}
             >
               <Calculator className="w-3.5 h-3.5" />
@@ -282,7 +282,7 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
             <button
               id="btn-close-plan-creator"
               onClick={onClose}
-              className="p-1.5 rounded-lg text-stone-400 hover:text-white hover:bg-stone-800 transition-colors"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -291,16 +291,16 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
 
         {/* Optional Collapsible Inline Fitness Predictor */}
         {showPredictorBar && (
-          <div className="bg-stone-950 px-5 py-3 border-b border-stone-800 flex-shrink-0 animate-in fade-in duration-150">
+          <div className="bg-[#0B0E14] px-5 py-3 border-b border-white/[0.08] flex-shrink-0 animate-in fade-in duration-150">
             <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2">
                 <Trophy className="w-4 h-4 text-amber-400 flex-shrink-0" />
-                <span className="font-bold text-stone-200">Recent Benchmark Race:</span>
+                <span className="font-bold text-slate-200">Recent Benchmark Race:</span>
                 <select
                   id="pred-select-dist"
                   value={prevDistanceId}
                   onChange={(e) => setPrevDistanceId(e.target.value)}
-                  className="bg-stone-900 border border-stone-700 rounded-lg px-2 py-1 text-xs text-stone-200 focus:outline-none"
+                  className="bg-[#181E2A] border border-white/[0.1] rounded-lg px-2 py-1 text-xs text-slate-200 focus:outline-none"
                 >
                   <option value="5k">5K Race</option>
                   <option value="10k">10K Race</option>
@@ -309,7 +309,7 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
                 </select>
               </div>
 
-              <div className="flex items-center gap-1.5 bg-stone-900 px-2.5 py-1 rounded-lg border border-stone-700">
+              <div className="flex items-center gap-1.5 bg-[#181E2A] px-2.5 py-1 rounded-lg border border-white/[0.08]">
                 <input
                   id="pred-input-h"
                   type="number"
@@ -317,9 +317,9 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
                   max="10"
                   value={prevHours}
                   onChange={(e) => setPrevHours(Math.max(0, parseInt(e.target.value) || 0))}
-                  className="w-10 bg-stone-800 text-center text-xs text-white rounded py-0.5 outline-none font-mono"
+                  className="w-10 bg-[#12161F] text-center text-xs text-white rounded py-0.5 outline-none font-mono"
                 />
-                <span className="text-[10px] text-stone-400">h</span>
+                <span className="text-[10px] text-slate-400">h</span>
                 <input
                   id="pred-input-m"
                   type="number"
@@ -327,9 +327,9 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
                   max="59"
                   value={prevMinutes}
                   onChange={(e) => setPrevMinutes(Math.min(59, Math.max(0, parseInt(e.target.value) || 0)))}
-                  className="w-10 bg-stone-800 text-center text-xs text-white rounded py-0.5 outline-none font-mono"
+                  className="w-10 bg-[#12161F] text-center text-xs text-white rounded py-0.5 outline-none font-mono"
                 />
-                <span className="text-[10px] text-stone-400">m</span>
+                <span className="text-[10px] text-slate-400">m</span>
                 <input
                   id="pred-input-s"
                   type="number"
@@ -337,16 +337,16 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
                   max="59"
                   value={prevSeconds}
                   onChange={(e) => setPrevSeconds(Math.min(59, Math.max(0, parseInt(e.target.value) || 0)))}
-                  className="w-10 bg-stone-800 text-center text-xs text-white rounded py-0.5 outline-none font-mono"
+                  className="w-10 bg-[#12161F] text-center text-xs text-white rounded py-0.5 outline-none font-mono"
                 />
-                <span className="text-[10px] text-stone-400">s</span>
+                <span className="text-[10px] text-slate-400">s</span>
               </div>
 
               <button
                 id="btn-apply-prediction-to-plan"
                 type="button"
                 onClick={handleApplyPredictedTime}
-                className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs flex items-center gap-1.5 shadow"
+                className="px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow"
               >
                 <span>Apply Predicted Pacing</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -369,7 +369,7 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
             <div className="lg:col-span-6 space-y-4 flex flex-col justify-between">
               {/* Step 1: Target Race Distance */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-stone-300 flex items-center gap-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
                   <Trophy className="w-3.5 h-3.5 text-amber-400" />
                   <span>1. Target Race Event</span>
                 </label>
@@ -387,12 +387,12 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
                       onClick={() => handleSelectEvent(item.id as any)}
                       className={`p-2.5 rounded-xl border text-center transition-all ${
                         event === item.id
-                          ? 'bg-amber-500/20 border-amber-500 text-amber-300 shadow-sm'
-                          : 'bg-stone-950/60 border-stone-800 text-stone-300 hover:bg-stone-800/70'
+                          ? 'bg-amber-400/15 border-amber-400/50 text-amber-300 shadow-sm'
+                          : 'bg-[#181E2A] border-white/[0.06] text-slate-300 hover:bg-[#1E2536]'
                       }`}
                     >
                       <div className="font-bold text-xs">{item.label}</div>
-                      <div className="text-[10px] text-stone-400 font-mono mt-0.5">{item.dist}</div>
+                      <div className="text-[10px] text-slate-400 font-mono mt-0.5">{item.dist}</div>
                     </button>
                   ))}
                 </div>
@@ -401,17 +401,17 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
               {/* Step 2: Target Finish Time & Pace */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase tracking-wider text-stone-300 flex items-center gap-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
                     <Activity className="w-3.5 h-3.5 text-amber-400" />
                     <span>2. Target Finish Time & Pace</span>
                   </label>
-                  <span className="text-xs text-stone-400">
+                  <span className="text-xs text-slate-400">
                     Goal Pace: <strong className="text-amber-400 font-mono">{goalPaceStr}</strong>
                   </span>
                 </div>
 
                 <div className="grid grid-cols-12 gap-2">
-                  <div className="col-span-6 flex items-center gap-2 bg-stone-950/80 px-3 py-2 rounded-xl border border-stone-700/80">
+                  <div className="col-span-6 flex items-center gap-2 bg-[#181E2A] px-3 py-2 rounded-xl border border-white/[0.08]">
                     <input
                       id="input-goal-hours"
                       type="number"
@@ -419,9 +419,9 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
                       max="10"
                       value={goalHours}
                       onChange={(e) => setGoalHours(Math.max(0, parseInt(e.target.value) || 0))}
-                      className="w-12 bg-stone-800 text-center text-sm font-bold text-white rounded py-1 outline-none font-mono focus:ring-1 focus:ring-amber-500"
+                      className="w-12 bg-[#12161F] text-center text-sm font-bold text-white rounded py-1 outline-none font-mono focus:ring-1 focus:ring-amber-400"
                     />
-                    <span className="text-xs text-stone-400">hours</span>
+                    <span className="text-xs text-slate-400">hours</span>
                     <input
                       id="input-goal-minutes"
                       type="number"
@@ -429,14 +429,14 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
                       max="59"
                       value={goalMinutes}
                       onChange={(e) => setGoalMinutes(Math.min(59, Math.max(0, parseInt(e.target.value) || 0)))}
-                      className="w-12 bg-stone-800 text-center text-sm font-bold text-white rounded py-1 outline-none font-mono focus:ring-1 focus:ring-amber-500"
+                      className="w-12 bg-[#12161F] text-center text-sm font-bold text-white rounded py-1 outline-none font-mono focus:ring-1 focus:ring-amber-400"
                     />
-                    <span className="text-xs text-stone-400">mins</span>
+                    <span className="text-xs text-slate-400">mins</span>
                   </div>
 
-                  <div className="col-span-6 flex items-center justify-center p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center">
+                  <div className="col-span-6 flex items-center justify-center p-2 rounded-xl bg-amber-400/10 border border-amber-400/20 text-center">
                     <div>
-                      <span className="text-[10px] text-stone-400 block uppercase font-medium">Race Pace</span>
+                      <span className="text-[10px] text-slate-400 block uppercase font-medium">Race Pace</span>
                       <span className="text-sm font-extrabold text-amber-300 font-mono">{goalPaceStr}</span>
                     </div>
                   </div>
@@ -446,16 +446,16 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
               {/* Step 3: Plan Duration & Custom Weeks */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase tracking-wider text-stone-300 flex items-center gap-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
                     <Layers className="w-3.5 h-3.5 text-amber-400" />
                     <span>3. Plan Duration</span>
                   </label>
-                  <div className="flex items-center gap-1.5 bg-stone-950/80 px-2 py-0.5 rounded-lg border border-stone-800">
+                  <div className="flex items-center gap-1.5 bg-[#181E2A] px-2 py-0.5 rounded-lg border border-white/[0.08]">
                     <button
                       type="button"
                       id="btn-decrement-weeks"
                       onClick={() => handleWeeksCountChange(weeksCount - 1)}
-                      className="p-1 rounded text-stone-400 hover:text-white hover:bg-stone-800 transition-colors"
+                      className="p-1 rounded text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors"
                       title="Decrease weeks"
                     >
                       <Minus className="w-3 h-3" />
@@ -469,12 +469,12 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
                       onChange={(e) => handleWeeksCountChange(parseInt(e.target.value) || 12)}
                       className="w-8 text-center text-xs font-bold text-amber-400 bg-transparent font-mono outline-none"
                     />
-                    <span className="text-[11px] text-stone-400">wks</span>
+                    <span className="text-[11px] text-slate-400">wks</span>
                     <button
                       type="button"
                       id="btn-increment-weeks"
                       onClick={() => handleWeeksCountChange(weeksCount + 1)}
-                      className="p-1 rounded text-stone-400 hover:text-white hover:bg-stone-800 transition-colors"
+                      className="p-1 rounded text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors"
                       title="Increase weeks"
                     >
                       <Plus className="w-3 h-3" />
@@ -491,8 +491,8 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
                       onClick={() => handleWeeksCountChange(num)}
                       className={`py-1.5 text-xs font-bold rounded-lg border transition-all ${
                         weeksCount === num
-                          ? 'bg-amber-500 text-stone-950 border-amber-500 shadow-sm'
-                          : 'bg-stone-950/60 border-stone-800 text-stone-300 hover:bg-stone-800'
+                          ? 'bg-amber-400 text-slate-950 border-amber-400 shadow-sm'
+                          : 'bg-[#181E2A] border-white/[0.06] text-slate-300 hover:bg-[#1E2536]'
                       }`}
                     >
                       {num}w
@@ -504,17 +504,17 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
               {/* Step 4: Coordinated Start Date & Race Date (Full Calendar Sync) */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase tracking-wider text-stone-300 flex items-center gap-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5 text-amber-400" />
                     <span>4. Start Date & Race Date</span>
                   </label>
-                  <span className="text-[11px] text-stone-400">
+                  <span className="text-[11px] text-slate-400">
                     Long run day:{' '}
                     <select
                       id="select-long-run-day"
                       value={longRunDay}
                       onChange={(e) => handleLongRunDayChange(e.target.value as any)}
-                      className="bg-stone-900 border border-stone-700/80 rounded px-1.5 py-0.5 text-[11px] text-amber-400 font-semibold focus:outline-none"
+                      className="bg-[#181E2A] border border-white/[0.1] rounded px-1.5 py-0.5 text-[11px] text-amber-400 font-semibold focus:outline-none"
                     >
                       <option value="sunday">Sunday (Race)</option>
                       <option value="saturday">Saturday (Race)</option>
@@ -524,8 +524,8 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div className="space-y-1">
-                    <div className="text-[11px] font-semibold text-stone-400 flex items-center gap-1">
-                      <Calendar className="w-3 h-3 text-stone-400" />
+                    <div className="text-[11px] font-semibold text-slate-400 flex items-center gap-1">
+                      <Calendar className="w-3 h-3 text-slate-400" />
                       <span>Start Date (Week 1 Mon)</span>
                     </div>
                     <input
@@ -533,7 +533,7 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
                       type="date"
                       value={startDateStr}
                       onChange={(e) => handleStartDateChange(e.target.value)}
-                      className="w-full bg-stone-950/80 border border-stone-700/80 rounded-xl px-2.5 py-1.5 text-xs text-stone-200 focus:outline-none font-mono focus:border-amber-500"
+                      className="w-full bg-[#181E2A] border border-white/[0.08] rounded-xl px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none font-mono focus:border-amber-400"
                     />
                   </div>
 
@@ -547,15 +547,15 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
                       type="date"
                       value={raceDateStr}
                       onChange={(e) => handleRaceDateChange(e.target.value)}
-                      className="w-full bg-stone-950/80 border border-amber-500/40 rounded-xl px-2.5 py-1.5 text-xs text-amber-300 focus:outline-none font-mono focus:border-amber-400"
+                      className="w-full bg-[#181E2A] border border-amber-400/40 rounded-xl px-2.5 py-1.5 text-xs text-amber-300 focus:outline-none font-mono focus:border-amber-400"
                     />
                   </div>
                 </div>
 
                 {/* Live Synchronization & Tallying Status */}
-                <div className="p-2 rounded-xl bg-stone-950/90 border border-stone-800 text-[11px] space-y-1">
+                <div className="p-2 rounded-xl bg-[#181E2A] border border-white/[0.06] text-[11px] space-y-1">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                    <div className="flex items-center gap-1.5 text-stone-300">
+                    <div className="flex items-center gap-1.5 text-slate-300">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                       <span>
                         <strong className="text-emerald-400 font-semibold">{weeksCount} Weeks</strong> tallies:{' '}
@@ -579,9 +579,9 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
                     </button>
                   </div>
                   {dateSyncNotice && (
-                    <div className="text-[10px] text-amber-300/90 font-mono flex items-center justify-between pt-0.5 border-t border-stone-800/60">
+                    <div className="text-[10px] text-amber-300/90 font-mono flex items-center justify-between pt-0.5 border-t border-white/[0.06]">
                       <span>{dateSyncNotice}</span>
-                      <button type="button" onClick={() => setDateSyncNotice(null)} className="text-stone-400 hover:text-white ml-2">✕</button>
+                      <button type="button" onClick={() => setDateSyncNotice(null)} className="text-slate-400 hover:text-white ml-2">✕</button>
                     </div>
                   )}
                 </div>
@@ -590,7 +590,7 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
               {/* Step 5: Runner Level & Frequency */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-stone-300">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-300">
                     5. Experience Level
                   </label>
                   <div className="grid grid-cols-3 gap-1.5">
@@ -602,8 +602,8 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
                         onClick={() => setLevel(lvl)}
                         className={`py-1.5 rounded-lg text-xs font-bold capitalize border transition-all text-center ${
                           level === lvl
-                            ? 'bg-amber-500/20 border-amber-500 text-amber-300'
-                            : 'bg-stone-950/60 border-stone-800 text-stone-400 hover:bg-stone-800'
+                            ? 'bg-amber-400/15 border-amber-400 text-amber-300'
+                            : 'bg-[#181E2A] border-white/[0.06] text-slate-400 hover:bg-[#1E2536]'
                         }`}
                       >
                         {lvl.slice(0, 3)}
@@ -613,7 +613,7 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-stone-300">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-300">
                     6. Runs per Week
                   </label>
                   <div className="grid grid-cols-4 gap-1.5">
@@ -625,8 +625,8 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
                         onClick={() => setDaysPerWeek(days)}
                         className={`py-1.5 rounded-lg text-xs font-bold border transition-all text-center ${
                           daysPerWeek === days
-                            ? 'bg-amber-500/20 border-amber-500 text-amber-300'
-                            : 'bg-stone-950/60 border-stone-800 text-stone-400 hover:bg-stone-800'
+                            ? 'bg-amber-400/15 border-amber-400 text-amber-300'
+                            : 'bg-[#181E2A] border-white/[0.06] text-slate-400 hover:bg-[#1E2536]'
                         }`}
                       >
                         {days} d/wk
@@ -638,7 +638,7 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
             </div>
 
             {/* Right Column: Live Calculated Pacing Matrix & Periodization Snapshot (6 cols) */}
-            <div className="lg:col-span-6 space-y-4 flex flex-col justify-between bg-stone-950/50 p-4 rounded-xl border border-stone-800/80">
+            <div className="lg:col-span-6 space-y-4 flex flex-col justify-between bg-[#181E2A]/60 p-4 rounded-xl border border-white/[0.06]">
               {/* Calculated Training Zones */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -646,24 +646,24 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
                     <ShieldCheck className="w-3.5 h-3.5" />
                     <span>Calibrated Training Zones</span>
                   </span>
-                  <span className="text-[10px] text-stone-400">80% Easy / 20% Quality</span>
+                  <span className="text-[10px] text-slate-400">80% Easy / 20% Quality</span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                  <div className="p-2.5 rounded-lg bg-stone-900 border border-stone-800">
-                    <div className="text-[10px] text-stone-400 uppercase font-semibold">Easy / Base</div>
-                    <div className="text-xs font-mono font-bold text-blue-300 mt-0.5">{aerobicPaceStr}</div>
+                  <div className="p-2.5 rounded-lg bg-[#12161F] border border-white/[0.06]">
+                    <div className="text-[10px] text-slate-400 uppercase font-semibold">Easy / Base</div>
+                    <div className="text-xs font-mono font-bold text-sky-300 mt-0.5">{aerobicPaceStr}</div>
                   </div>
-                  <div className="p-2.5 rounded-lg bg-stone-900 border border-stone-800">
-                    <div className="text-[10px] text-stone-400 uppercase font-semibold">Recovery</div>
-                    <div className="text-xs font-mono font-bold text-stone-300 mt-0.5">{recoveryPaceStr}</div>
+                  <div className="p-2.5 rounded-lg bg-[#12161F] border border-white/[0.06]">
+                    <div className="text-[10px] text-slate-400 uppercase font-semibold">Recovery</div>
+                    <div className="text-xs font-mono font-bold text-emerald-300 mt-0.5">{recoveryPaceStr}</div>
                   </div>
-                  <div className="p-2.5 rounded-lg bg-stone-900 border border-stone-800">
-                    <div className="text-[10px] text-stone-400 uppercase font-semibold">Threshold</div>
+                  <div className="p-2.5 rounded-lg bg-[#12161F] border border-white/[0.06]">
+                    <div className="text-[10px] text-slate-400 uppercase font-semibold">Threshold</div>
                     <div className="text-xs font-mono font-bold text-amber-400 mt-0.5">{tempoPaceStr}</div>
                   </div>
-                  <div className="p-2.5 rounded-lg bg-stone-900 border border-stone-800">
-                    <div className="text-[10px] text-stone-400 uppercase font-semibold">Intervals</div>
+                  <div className="p-2.5 rounded-lg bg-[#12161F] border border-white/[0.06]">
+                    <div className="text-[10px] text-slate-400 uppercase font-semibold">Intervals</div>
                     <div className="text-xs font-mono font-bold text-rose-400 mt-0.5">{intervalPaceStr}</div>
                   </div>
                 </div>
@@ -671,68 +671,68 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
 
               {/* Plan Volume & Anatomy Highlights */}
               <div className="grid grid-cols-3 gap-2">
-                <div className="p-3 rounded-xl bg-stone-900/90 border border-stone-800 text-center">
-                  <span className="text-[10px] uppercase font-semibold text-stone-400 block">Total Volume</span>
+                <div className="p-3 rounded-xl bg-[#12161F] border border-white/[0.06] text-center">
+                  <span className="text-[10px] uppercase font-semibold text-slate-400 block">Total Volume</span>
                   <span className="text-base font-extrabold text-white font-mono">{totalPlanDistance} km</span>
                 </div>
 
-                <div className="p-3 rounded-xl bg-stone-900/90 border border-stone-800 text-center">
-                  <span className="text-[10px] uppercase font-semibold text-stone-400 block">Peak Long Run</span>
+                <div className="p-3 rounded-xl bg-[#12161F] border border-white/[0.06] text-center">
+                  <span className="text-[10px] uppercase font-semibold text-slate-400 block">Peak Long Run</span>
                   <span className="text-base font-extrabold text-amber-400 font-mono">{peakLongRunKm} km</span>
                 </div>
 
-                <div className="p-3 rounded-xl bg-stone-900/90 border border-stone-800 text-center">
-                  <span className="text-[10px] uppercase font-semibold text-stone-400 block">Adaptation</span>
+                <div className="p-3 rounded-xl bg-[#12161F] border border-white/[0.06] text-center">
+                  <span className="text-[10px] uppercase font-semibold text-slate-400 block">Adaptation</span>
                   <span className="text-base font-extrabold text-emerald-400 font-mono">3:1 Cycles</span>
                 </div>
               </div>
 
               {/* Schedule Timeline Highlight */}
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-stone-900/90 border border-stone-800 text-xs">
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#12161F] border border-white/[0.06] text-xs">
                 <div>
-                  <span className="text-[10px] uppercase font-semibold text-stone-400 block">Kickoff (Week 1)</span>
+                  <span className="text-[10px] uppercase font-semibold text-slate-400 block">Kickoff (Week 1)</span>
                   <span className="text-white font-mono font-bold text-xs">{formatPrettyDate(startDateStr)}</span>
                 </div>
-                <div className="text-center px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 font-bold font-mono text-xs">
+                <div className="text-center px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-300 font-bold font-mono text-xs">
                   {weeksCount} Weeks
                 </div>
                 <div className="text-right">
-                  <span className="text-[10px] uppercase font-semibold text-stone-400 block">Race Day (Week {weeksCount})</span>
+                  <span className="text-[10px] uppercase font-semibold text-slate-400 block">Race Day (Week {weeksCount})</span>
                   <span className="text-amber-400 font-mono font-bold text-xs">{formatPrettyDate(raceDateStr)}</span>
                 </div>
               </div>
 
               {/* Periodization Timeline Visualizer */}
-              <div className="p-3 rounded-xl bg-stone-900/70 border border-stone-800/80 space-y-1.5">
-                <span className="text-[11px] font-semibold text-stone-300 block">
+              <div className="p-3 rounded-xl bg-[#12161F] border border-white/[0.06] space-y-1.5">
+                <span className="text-[11px] font-semibold text-slate-300 block">
                   Periodized Training Flow ({weeksCount} Weeks)
                 </span>
                 <div className="flex items-center gap-1 text-[11px] font-mono">
-                  <div className="flex-1 p-1.5 rounded bg-blue-500/10 border border-blue-500/20 text-blue-300 text-center">
+                  <div className="flex-1 p-1.5 rounded bg-sky-400/10 border border-sky-400/20 text-sky-300 text-center">
                     🌱 Base ({Math.round(weeksCount * 0.35)}w)
                   </div>
-                  <div className="flex-1 p-1.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300 text-center">
+                  <div className="flex-1 p-1.5 rounded bg-amber-400/10 border border-amber-400/20 text-amber-300 text-center">
                     ⚡ Build ({Math.round(weeksCount * 0.3)}w)
                   </div>
-                  <div className="flex-1 p-1.5 rounded bg-rose-500/10 border border-rose-500/20 text-rose-300 text-center">
+                  <div className="flex-1 p-1.5 rounded bg-orange-400/10 border border-orange-400/20 text-orange-300 text-center">
                     🔥 Peak ({Math.max(1, weeksCount - Math.round(weeksCount * 0.35) - Math.round(weeksCount * 0.3) - (weeksCount >= 16 ? 3 : weeksCount >= 10 ? 2 : 1))}w)
                   </div>
-                  <div className="flex-1 p-1.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-center">
+                  <div className="flex-1 p-1.5 rounded bg-emerald-400/10 border border-emerald-400/20 text-emerald-300 text-center">
                     🏁 Taper ({weeksCount >= 16 ? 3 : weeksCount >= 10 ? 2 : 1}w)
                   </div>
                 </div>
-                <p className="text-[10px] text-stone-400 leading-tight pt-0.5">
+                <p className="text-[10px] text-slate-400 leading-tight pt-0.5">
                   Includes scheduled 20% cutback weeks every 4 weeks to absorb training adaptation and avoid injury.
                 </p>
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-2 flex items-center justify-end gap-3 border-t border-stone-800">
+              <div className="pt-2 flex items-center justify-end gap-3 border-t border-white/[0.08]">
                 <button
                   id="btn-cancel-plan-creator"
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-stone-400 hover:text-white transition-colors"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition-colors"
                 >
                   Cancel
                 </button>
@@ -741,7 +741,7 @@ export const PlanCreatorModal: React.FC<PlanCreatorModalProps> = ({
                   id="btn-apply-plan-creator"
                   type="button"
                   onClick={handleGenerateAndApply}
-                  className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs flex items-center gap-2 shadow-lg transition-all"
+                  className="px-6 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-lg transition-all"
                 >
                   <Sparkles className="w-4 h-4" />
                   <span>Generate & Apply Plan</span>

@@ -107,22 +107,22 @@ export const IntervalTimerModal: React.FC<IntervalTimerModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
       <div
         id="interval-timer-container"
-        className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl text-stone-100"
+        className="bg-[#12161F] border border-white/[0.08] rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl text-slate-100"
       >
         {/* Header */}
-        <div className="bg-stone-900/95 px-6 py-4 border-b border-stone-800 flex items-center justify-between">
+        <div className="bg-[#12161F] px-6 py-4 border-b border-white/[0.08] flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
-              <Timer className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-lg bg-amber-400/10 text-amber-400 flex items-center justify-center border border-amber-400/20">
+              <Timer className="w-4 h-4" />
             </div>
             <div>
               <h2 className="text-base font-bold text-white leading-tight">
                 Quality Interval Timer
               </h2>
-              <p className="text-xs text-stone-400">
+              <p className="text-xs text-slate-400 font-mono mt-0.5">
                 Track intervals & recovery floats
               </p>
             </div>
@@ -131,16 +131,16 @@ export const IntervalTimerModal: React.FC<IntervalTimerModalProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSoundEnabled(!soundEnabled)}
-              className="p-1.5 rounded-lg text-stone-400 hover:text-white hover:bg-stone-800 transition-colors"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors"
               title={soundEnabled ? 'Mute sound' : 'Enable sound'}
             >
               {soundEnabled ? <Volume2 className="w-4 h-4 text-emerald-400" /> : <VolumeX className="w-4 h-4" />}
             </button>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-stone-400 hover:text-white hover:bg-stone-800 transition-colors"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -150,35 +150,35 @@ export const IntervalTimerModal: React.FC<IntervalTimerModalProps> = ({
           {/* Phase Badge */}
           <div className="flex items-center justify-center gap-3">
             <span
-              className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest border transition-colors ${
+              className={`px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-widest border transition-colors ${
                 phase === 'work'
-                  ? 'bg-rose-500/20 text-rose-400 border-rose-500/40'
+                  ? 'bg-rose-500/15 text-rose-300 border-rose-500/30'
                   : phase === 'rest'
-                  ? 'bg-blue-500/20 text-blue-400 border-blue-500/40'
-                  : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                  ? 'bg-sky-500/15 text-sky-300 border-sky-500/30'
+                  : 'bg-emerald-400/15 text-emerald-300 border-emerald-400/30'
               }`}
             >
               {phase === 'work' ? '🔥 WORK INTERVAL' : phase === 'rest' ? '🧊 RECOVERY JOG' : '🎉 WORKOUT COMPLETED!'}
             </span>
 
-            <span className="text-xs font-mono text-stone-400">
+            <span className="text-xs font-mono text-slate-400">
               Rep {currentSet} of {totalSets}
             </span>
           </div>
 
           {/* Big Digital Countdown */}
-          <div className="py-4">
-            <div className="text-7xl sm:text-8xl font-mono font-extrabold tracking-tight text-white drop-shadow">
+          <div className="py-3">
+            <div className="text-7xl sm:text-8xl font-mono font-extrabold tracking-tight text-white drop-shadow tabular-nums">
               {formatMinSec(timeLeft)}
             </div>
           </div>
 
           {/* Play/Pause Controls */}
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-center justify-center gap-3">
             <button
               id="btn-timer-reset"
               onClick={handleReset}
-              className="p-3 rounded-2xl bg-stone-800 hover:bg-stone-700 text-stone-300 transition-colors"
+              className="p-3 rounded-xl bg-[#181E2A] hover:bg-white/[0.06] text-slate-300 border border-white/[0.06] transition-colors"
               title="Reset timer"
             >
               <RotateCcw className="w-5 h-5" />
@@ -187,20 +187,20 @@ export const IntervalTimerModal: React.FC<IntervalTimerModalProps> = ({
             <button
               id="btn-timer-toggle"
               onClick={() => setIsActive(!isActive)}
-              className={`px-8 py-3.5 rounded-2xl font-bold text-base flex items-center gap-2 shadow-lg transition-all ${
+              className={`px-8 py-3 rounded-xl font-semibold text-sm flex items-center gap-2 shadow-lg transition-all active:scale-95 ${
                 isActive
-                  ? 'bg-amber-500 hover:bg-amber-400 text-stone-950'
-                  : 'bg-emerald-500 hover:bg-emerald-400 text-stone-950'
+                  ? 'bg-amber-400 hover:bg-amber-300 text-slate-950'
+                  : 'bg-emerald-400 hover:bg-emerald-300 text-slate-950'
               }`}
             >
               {isActive ? (
                 <>
-                  <Pause className="w-5 h-5 fill-current" />
+                  <Pause className="w-4 h-4 fill-current" />
                   <span>Pause</span>
                 </>
               ) : (
                 <>
-                  <Play className="w-5 h-5 fill-current" />
+                  <Play className="w-4 h-4 fill-current" />
                   <span>Start Rep</span>
                 </>
               )}
@@ -208,45 +208,45 @@ export const IntervalTimerModal: React.FC<IntervalTimerModalProps> = ({
           </div>
 
           {/* Presets Grid */}
-          <div className="pt-4 border-t border-stone-800 text-left">
-            <div className="text-xs font-bold uppercase tracking-wider text-stone-400 mb-2">
+          <div className="pt-5 border-t border-white/[0.08] text-left">
+            <div className="text-xs font-mono font-semibold uppercase tracking-wider text-slate-400 mb-2.5">
               Plan Presets
             </div>
             <div className="grid grid-cols-2 gap-2 text-xs">
               <button
                 type="button"
                 onClick={() => applyPreset(116, 84, 6)}
-                className="p-2.5 rounded-xl bg-stone-800/80 hover:bg-stone-700/80 border border-stone-700/60 text-left transition-colors"
+                className="p-2.5 rounded-xl bg-[#181E2A] hover:bg-white/[0.06] border border-white/[0.06] text-left transition-colors"
               >
-                <div className="font-bold text-white">6x400m Reps</div>
-                <div className="text-[11px] text-stone-400">1:56 Work · 1:24 Recovery</div>
+                <div className="font-semibold text-white">6x400m Reps</div>
+                <div className="text-[11px] text-slate-400 font-mono mt-0.5">1:56 Work · 1:24 Recovery</div>
               </button>
 
               <button
                 type="button"
                 onClick={() => applyPreset(240, 84, 6)}
-                className="p-2.5 rounded-xl bg-stone-800/80 hover:bg-stone-700/80 border border-stone-700/60 text-left transition-colors"
+                className="p-2.5 rounded-xl bg-[#181E2A] hover:bg-white/[0.06] border border-white/[0.06] text-left transition-colors"
               >
-                <div className="font-bold text-white">6x800m Reps</div>
-                <div className="text-[11px] text-stone-400">4:00 Work · 1:24 Recovery</div>
+                <div className="font-semibold text-white">6x800m Reps</div>
+                <div className="text-[11px] text-slate-400 font-mono mt-0.5">4:00 Work · 1:24 Recovery</div>
               </button>
 
               <button
                 type="button"
                 onClick={() => applyPreset(305, 84, 5)}
-                className="p-2.5 rounded-xl bg-stone-800/80 hover:bg-stone-700/80 border border-stone-700/60 text-left transition-colors"
+                className="p-2.5 rounded-xl bg-[#181E2A] hover:bg-white/[0.06] border border-white/[0.06] text-left transition-colors"
               >
-                <div className="font-bold text-white">5x1km Reps</div>
-                <div className="text-[11px] text-stone-400">5:05 Work · 1:24 Recovery</div>
+                <div className="font-semibold text-white">5x1km Reps</div>
+                <div className="text-[11px] text-slate-400 font-mono mt-0.5">5:05 Work · 1:24 Recovery</div>
               </button>
 
               <button
                 type="button"
                 onClick={() => applyPreset(496, 168, 4)}
-                className="p-2.5 rounded-xl bg-stone-800/80 hover:bg-stone-700/80 border border-stone-700/60 text-left transition-colors"
+                className="p-2.5 rounded-xl bg-[#181E2A] hover:bg-white/[0.06] border border-white/[0.06] text-left transition-colors"
               >
-                <div className="font-bold text-white">4x1.6km Reps</div>
-                <div className="text-[11px] text-stone-400">8:16 Work · 2:48 Recovery</div>
+                <div className="font-semibold text-white">4x1.6km Reps</div>
+                <div className="text-[11px] text-slate-400 font-mono mt-0.5">8:16 Work · 2:48 Recovery</div>
               </button>
             </div>
           </div>

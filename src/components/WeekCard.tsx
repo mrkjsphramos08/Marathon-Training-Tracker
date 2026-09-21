@@ -1,6 +1,7 @@
 import React from 'react';
-import { Check, ChevronRight, MapPin, Clock, Gauge, Flame, Sparkles } from 'lucide-react';
+import { Check, ChevronRight, Gauge, Flame, Sparkles } from 'lucide-react';
 import { TrainingWeek, DaySchedule } from '../types';
+import { formatWorkoutDisplay } from '../utils/paceCalculations';
 
 interface WeekCardProps {
   week: TrainingWeek;
@@ -25,52 +26,65 @@ export const WeekCard: React.FC<WeekCardProps> = ({
     { key: 'sunday', day: week.days.sunday },
   ];
 
-  // Calculate actual distance from logged days
+  // Calculate actual distance only from completed workouts
   const actualLoggedDist = daysArray.reduce((acc, curr) => {
-    if (curr.day.loggedData?.actualKm) {
-      return acc + curr.day.loggedData.actualKm;
-    } else if (curr.day.completed && curr.day.plannedKm > 0) {
-      return acc + curr.day.plannedKm;
+    if (curr.day.completed) {
+      if (curr.day.loggedData?.actualKm !== undefined && curr.day.loggedData.actualKm > 0) {
+        return acc + curr.day.loggedData.actualKm;
+      } else if (curr.day.plannedKm > 0) {
+        return acc + curr.day.plannedKm;
+      }
     }
     return acc;
   }, 0);
 
-  const completedCount = daysArray.filter((d) => d.day.completed).length;
-  const progressPercent = Math.min(100, Math.round((actualLoggedDist / week.plannedDist) * 100));
+  const completedCount = daysArray.filter((d) => d.day.completed && d.day.type !== 'rest').length;
+  const totalRuns = daysArray.filter((d) => d.day.type !== 'rest').length;
+  const progressPercent = Math.min(100, Math.round((actualLoggedDist / week.plannedDist) * 100)) || 0;
 
-  const getDayTypeClasses = (type: string, completed: boolean) => {
-    if (completed) {
-      return 'bg-emerald-900/30 border-emerald-600/50 text-emerald-300';
-    }
+  const getTypeAccent = (type: string) => {
     switch (type) {
-      case 'recovery':
-        return 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20';
-      case 'aerobic':
-        return 'bg-blue-500/10 border-blue-500/20 text-blue-400 hover:bg-blue-500/20';
       case 'quality':
-        return 'bg-orange-500/10 border-orange-500/30 text-orange-300 hover:bg-orange-500/20';
+        return {
+          dot: 'bg-orange-400',
+          badge: 'bg-orange-400/10 text-orange-300 border-orange-400/20',
+        };
       case 'long_run':
-        return 'bg-amber-500/15 border-amber-500/40 text-amber-300 hover:bg-amber-500/25';
+        return {
+          dot: 'bg-sky-400',
+          badge: 'bg-sky-400/10 text-sky-300 border-sky-400/20',
+        };
+      case 'aerobic':
+        return {
+          dot: 'bg-teal-400',
+          badge: 'bg-teal-400/10 text-teal-300 border-teal-400/20',
+        };
+      case 'recovery':
       case 'easy':
-        return 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20';
-      default: // rest
-        return 'bg-stone-800/40 border-stone-800 text-stone-500 hover:bg-stone-800';
+        return {
+          dot: 'bg-emerald-400',
+          badge: 'bg-emerald-400/10 text-emerald-300 border-emerald-400/20',
+        };
+      default:
+        return {
+          dot: 'bg-slate-600',
+          badge: 'bg-white/[0.04] text-slate-400 border-white/[0.06]',
+        };
     }
   };
 
-  const getPhaseColor = (phase: string) => {
-    switch (phase) {
-      case 'Base & Aerobic Build':
-        return 'text-blue-400 bg-blue-500/10 border-blue-500/20';
-      case 'Threshold & Volume':
-        return 'text-orange-400 bg-orange-500/10 border-orange-500/20';
-      case 'Peak & Specificity':
-        return 'text-amber-400 bg-amber-500/10 border-amber-500/20';
-      case 'Taper & Race':
-        return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
-      default:
-        return 'text-stone-400 bg-stone-800 border-stone-700';
+  const getPhaseBadge = (phase: string) => {
+    const p = phase.toLowerCase();
+    if (p.includes('base') || p.includes('aerobic')) {
+      return 'text-sky-300 bg-sky-400/10 border-sky-400/20';
+    } else if (p.includes('threshold') || p.includes('volume')) {
+      return 'text-amber-300 bg-amber-400/10 border-amber-400/20';
+    } else if (p.includes('peak') || p.includes('specificity')) {
+      return 'text-orange-300 bg-orange-400/10 border-orange-400/20';
+    } else if (p.includes('taper') || p.includes('race')) {
+      return 'text-emerald-300 bg-emerald-400/10 border-emerald-400/20';
     }
+    return 'text-slate-300 bg-white/[0.06] border-white/10';
   };
 
   return (
@@ -78,24 +92,24 @@ export const WeekCard: React.FC<WeekCardProps> = ({
       id={`week-card-${week.weekNumber}`}
       className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
         isCurrentWeek
-          ? 'bg-stone-800/90 border-amber-500/60 shadow-lg shadow-amber-500/5'
-          : 'bg-stone-900/80 border-stone-800 hover:border-stone-700'
+          ? 'bg-[#12161F] border-amber-400/40 shadow-[0_0_20px_rgba(245,158,11,0.06)]'
+          : 'bg-[#12161F] border-white/[0.08] hover:border-white/[0.14]'
       }`}
     >
       {/* Week Header */}
-      <div className="px-5 py-3.5 border-b border-stone-800/80 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-base font-bold text-white">
-              Week {week.weekNumber}
+      <div className="px-5 py-3.5 border-b border-white/[0.06] flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+          <div className="flex items-baseline gap-2">
+            <span className="font-mono text-base font-bold text-white tracking-tight">
+              Week {week.weekNumber < 10 ? `0${week.weekNumber}` : week.weekNumber}
             </span>
-            <span className="text-xs text-stone-400 font-medium">
-              ({week.dateMon})
+            <span className="text-xs font-mono text-slate-400">
+              {week.dateMon}
             </span>
           </div>
 
           <span
-            className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${getPhaseColor(
+            className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${getPhaseBadge(
               week.phase
             )}`}
           >
@@ -103,29 +117,29 @@ export const WeekCard: React.FC<WeekCardProps> = ({
           </span>
 
           {isCurrentWeek && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-amber-400 text-stone-950">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-amber-400 text-slate-950">
               <Sparkles className="w-3 h-3" />
-              CURRENT
+              Current
             </span>
           )}
         </div>
 
-        {/* Planned vs Actual Volume */}
-        <div className="flex items-center gap-5 text-xs">
+        {/* Volume & Completion Progress */}
+        <div className="flex items-center gap-5 text-xs font-mono">
           <div className="flex items-center gap-1.5">
-            <span className="text-stone-400">Planned:</span>
-            <span className="font-bold text-stone-200">{week.plannedDist} km</span>
+            <span className="text-slate-400">Target:</span>
+            <span className="font-semibold text-slate-200">{week.plannedDist} km</span>
           </div>
 
           <div className="flex items-center gap-1.5">
-            <span className="text-stone-400">Logged:</span>
+            <span className="text-slate-400">Logged:</span>
             <span
-              className={`font-bold ${
+              className={`font-semibold ${
                 actualLoggedDist >= week.plannedDist
                   ? 'text-emerald-400'
                   : actualLoggedDist > 0
                   ? 'text-amber-400'
-                  : 'text-stone-400'
+                  : 'text-slate-400'
               }`}
             >
               {actualLoggedDist > 0 ? `${actualLoggedDist.toFixed(1)} km` : '—'}
@@ -134,48 +148,60 @@ export const WeekCard: React.FC<WeekCardProps> = ({
 
           {/* Progress Mini Bar */}
           <div className="hidden sm:flex items-center gap-2 w-28">
-            <div className="w-full bg-stone-800 h-1.5 rounded-full overflow-hidden border border-stone-700/50">
+            <div className="w-full bg-white/[0.06] h-1.5 rounded-full overflow-hidden">
               <div
                 className={`h-1.5 rounded-full transition-all duration-300 ${
-                  progressPercent >= 100 ? 'bg-emerald-500' : 'bg-amber-500'
+                  progressPercent >= 100 ? 'bg-emerald-400' : 'bg-amber-400'
                 }`}
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
-            <span className="text-[10px] font-mono text-stone-400 min-w-[28px] text-right">
+            <span className="text-[10px] text-slate-400 min-w-[28px] text-right">
               {progressPercent}%
             </span>
           </div>
         </div>
       </div>
 
-      {/* Week Notes or Highlights if any */}
+      {/* Week Focus Highlights */}
       {week.notes && (
-        <div className="px-5 py-2 bg-amber-500/5 border-b border-amber-500/10 text-xs text-amber-300 flex items-center gap-2">
-          <Flame className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+        <div className="px-5 py-2 bg-amber-400/[0.04] border-b border-amber-400/10 text-xs text-amber-300/90 flex items-center gap-2 font-mono">
+          <Flame className="w-3.5 h-3.5 text-amber-400 shrink-0" />
           <span>{week.notes}</span>
         </div>
       )}
 
       {/* 7 Days Grid */}
-      <div className="p-4 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+      <div className="p-3 sm:p-4 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
         {daysArray.map(({ key, day }) => {
+          const accent = getTypeAccent(day.type);
+          const isRest = day.type === 'rest';
+
           return (
             <div
               key={key}
               onClick={() => onSelectDay(day, week.weekNumber)}
-              className={`group relative p-3 rounded-xl border text-left cursor-pointer transition-all duration-150 flex flex-col justify-between min-h-[118px] ${getDayTypeClasses(
-                day.type,
+              className={`group relative p-3 rounded-xl border text-left cursor-pointer transition-all duration-150 flex flex-col justify-between min-h-[124px] ${
                 day.completed
-              )}`}
+                  ? 'bg-emerald-500/[0.06] border-emerald-500/30 hover:border-emerald-500/50 shadow-sm'
+                  : isRest
+                  ? 'bg-[#151922]/50 border-white/[0.04] hover:border-white/[0.08] hover:bg-[#181E2A]'
+                  : 'bg-[#181E2A] border-white/[0.06] hover:border-white/[0.14] hover:bg-[#1C2332]'
+              }`}
             >
-              {/* Day Name & Status Check */}
+              {/* Day Name, Date & Status Toggle */}
               <div className="flex items-center justify-between gap-1">
-                <span className="text-[11px] font-bold uppercase tracking-wider opacity-80">
-                  {day.dayName.slice(0, 3)} <span className="opacity-60 text-[10px]">({day.dateStr})</span>
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${accent.dot}`} />
+                  <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-300">
+                    {day.dayName.slice(0, 3)}
+                  </span>
+                  <span className="text-[10px] font-mono text-slate-500">
+                    {day.dateStr ? day.dateStr.split(' ')[1] || day.dateStr : ''}
+                  </span>
+                </div>
 
-                {day.type !== 'rest' && (
+                {!isRest && (
                   <button
                     type="button"
                     onClick={(e) => {
@@ -185,8 +211,8 @@ export const WeekCard: React.FC<WeekCardProps> = ({
                     title={day.completed ? 'Mark uncompleted' : 'Mark completed'}
                     className={`w-4 h-4 rounded-full flex items-center justify-center transition-all ${
                       day.completed
-                        ? 'bg-emerald-500 text-stone-950 ring-2 ring-emerald-400/30'
-                        : 'border border-stone-600 hover:border-stone-400 group-hover:bg-stone-800/80'
+                        ? 'bg-emerald-400 text-slate-950 ring-2 ring-emerald-400/20'
+                        : 'border border-white/20 hover:border-white/40 group-hover:bg-white/[0.06]'
                     }`}
                   >
                     {day.completed && <Check className="w-2.5 h-2.5 stroke-[3]" />}
@@ -194,26 +220,37 @@ export const WeekCard: React.FC<WeekCardProps> = ({
                 )}
               </div>
 
-              {/* Workout details */}
+              {/* Workout Details */}
               <div className="my-1.5 flex-1 flex flex-col justify-start">
-                <div className="text-xs font-bold leading-snug line-clamp-2 text-white">
-                  {day.type === 'rest' ? 'Rest Day' : day.title}
-                </div>
+                {(() => {
+                  const { mainTitle, badge } = formatWorkoutDisplay(day.title, day.subtype);
+                  return (
+                    <>
+                      <div
+                        className={`text-xs font-semibold leading-snug line-clamp-2 ${
+                          day.completed ? 'text-emerald-200' : isRest ? 'text-slate-400' : 'text-white'
+                        }`}
+                      >
+                        {isRest ? 'Rest Day' : mainTitle}
+                      </div>
 
-                {/* Subtype Badge if provided */}
-                {day.subtype && (
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold bg-white/10 text-white/90 border border-white/10 leading-tight">
-                      {day.subtype}
-                    </span>
-                  </div>
-                )}
+                      {/* Workout Subtype / Short Description Badge */}
+                      {badge && !isRest && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-amber-400/10 text-amber-300 border border-amber-400/20 leading-tight">
+                            {badge}
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
 
                 {/* Workout Short Description */}
-                {day.details && day.type !== 'rest' && (
+                {day.details && !isRest && (
                   <p
                     title={day.details}
-                    className="text-[10.5px] leading-tight text-stone-300 line-clamp-2 mt-1 font-normal opacity-90 group-hover:opacity-100 transition-opacity"
+                    className="text-[10px] leading-tight text-slate-400 line-clamp-2 mt-1 font-normal opacity-90 group-hover:opacity-100 transition-opacity"
                   >
                     {day.details}
                   </p>
@@ -221,24 +258,28 @@ export const WeekCard: React.FC<WeekCardProps> = ({
 
                 {/* Target Pace */}
                 {day.targetPace && (
-                  <div className="text-[10px] opacity-90 font-mono truncate mt-1 flex items-center gap-1 text-amber-300/90 font-medium">
+                  <div className="text-[10px] font-mono truncate mt-1 flex items-center gap-1 text-amber-300/90 font-medium">
                     <Gauge className="w-2.5 h-2.5 shrink-0 opacity-70" />
                     <span>{day.targetPace}</span>
                   </div>
                 )}
               </div>
 
-              {/* Distance Bottom Badge */}
-              <div className="flex items-center justify-between pt-1 border-t border-current/10 text-[11px]">
-                <span className="font-semibold">
+              {/* Distance Bottom Row */}
+              <div className="flex items-center justify-between pt-1 border-t border-white/[0.06] text-[11px] font-mono">
+                <span className="font-semibold text-slate-300">
                   {day.plannedKm > 0 ? `${day.plannedKm} km` : '—'}
                 </span>
-                {day.loggedData?.actualKm ? (
-                  <span className="font-mono text-[10px] px-1 rounded bg-black/30 font-semibold">
-                    {day.loggedData.actualKm}k
+                {day.completed ? (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">
+                    {day.loggedData?.actualKm ? `${day.loggedData.actualKm}k` : '✓ Done'}
+                  </span>
+                ) : day.loggedData?.actualKm ? (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 font-medium border border-amber-500/30" title="Draft log (not marked as completed)">
+                    {day.loggedData.actualKm}k draft
                   </span>
                 ) : (
-                  <ChevronRight className="w-3 h-3 opacity-40 group-hover:opacity-100 transition-opacity" />
+                  <ChevronRight className="w-3 h-3 text-slate-500 group-hover:text-slate-300 transition-colors" />
                 )}
               </div>
             </div>

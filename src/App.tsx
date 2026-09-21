@@ -18,10 +18,9 @@ import { PlanCreatorModal } from './components/PlanCreatorModal';
 import { RacePredictorModal } from './components/RacePredictorModal';
 import { calculatePacePerKm, parseDurationToSeconds, formatSecondsToDuration } from './utils/paceCalculations';
 import { exportPlanToCsv, parseCsvToPlan } from './utils/csvPlanParser';
-import { USER_21_WEEK_CSV } from './data/plan21WeekData';
 
-const LOCAL_STORAGE_KEY = 'marathon_training_plan_v3';
-const LOCAL_STORAGE_META_KEY = 'marathon_plan_metadata_v3';
+const LOCAL_STORAGE_KEY = 'marathon_training_plan_v5';
+const LOCAL_STORAGE_META_KEY = 'marathon_plan_metadata_v5';
 
 interface PlanMetadata {
   title: string;
@@ -29,14 +28,12 @@ interface PlanMetadata {
   eventName?: string;
 }
 
-const PARSED_21_PLAN = parseCsvToPlan(USER_21_WEEK_CSV);
-const DEFAULT_PLAN: TrainingWeek[] =
-  PARSED_21_PLAN.success && PARSED_21_PLAN.plan ? PARSED_21_PLAN.plan : INITIAL_PLAN;
+const DEFAULT_PLAN: TrainingWeek[] = INITIAL_PLAN;
 
 const DEFAULT_META: PlanMetadata = {
-  title: '21-Week Marathon Tracker',
+  title: '18-Week Marathon Training Plan',
   goalPace: 'GMP 5:40/km',
-  eventName: 'Race on Feb 14, 2027',
+  eventName: 'Race Day',
 };
 
 export default function App() {
@@ -53,6 +50,7 @@ export default function App() {
         console.error('Failed to parse saved plan:', e);
       }
     }
+
     return DEFAULT_PLAN;
   });
 
@@ -171,17 +169,21 @@ export default function App() {
         [dayKey]: updatedDay,
       };
 
-      // Recalculate weekly totals
+      // Recalculate weekly totals ONLY for completed runs
       const daysList = Object.values(newDays) as DaySchedule[];
       const totalActualDist = daysList.reduce((acc, d) => {
-        if (d.loggedData?.actualKm) return acc + d.loggedData.actualKm;
-        if (d.completed && d.plannedKm > 0) return acc + d.plannedKm;
+        if (d.completed) {
+          if (d.loggedData?.actualKm !== undefined && d.loggedData.actualKm > 0) {
+            return acc + d.loggedData.actualKm;
+          }
+          if (d.plannedKm > 0) return acc + d.plannedKm;
+        }
         return acc;
       }, 0);
 
-      // Duration sum
+      // Duration sum for completed runs with recorded duration
       const totalSeconds = daysList.reduce((acc, d) => {
-        if (d.loggedData?.duration) {
+        if (d.completed && d.loggedData?.duration) {
           return acc + parseDurationToSeconds(d.loggedData.duration);
         }
         return acc;
@@ -204,6 +206,18 @@ export default function App() {
 
     setPlan(updatedPlan);
 
+    // Keep active workout modal synchronized
+    if (activeWorkout) {
+      setActiveWorkout({
+        weekNumber,
+        day: {
+          ...activeWorkout.day,
+          completed,
+          loggedData,
+        },
+      });
+    }
+
     // If final race day completed, throw confetti celebration!
     if (weekNumber === plan.length && (dayKey === 'sunday' || dayKey === 'saturday') && completed) {
       try {
@@ -215,6 +229,106 @@ export default function App() {
       } catch (e) {
         // confetti error ignored
       }
+    }
+  };
+
+  // Delete / Reset logged workout for a day
+  const handleDeleteWorkoutLog = (dayKey: keyof TrainingWeek['days'], weekNumber: number) => {
+    const updatedPlan = plan.map((w) => {
+      if (w.weekNumber !== weekNumber) return w;
+
+      const updatedDay: DaySchedule = {
+        ...w.days[dayKey],
+        completed: false,
+        loggedData: undefined,
+      };
+
+      const newDays = {
+        ...w.days,
+        [dayKey]: updatedDay,
+      };
+
+      const daysList = Object.values(newDays) as DaySchedule[];
+      const totalActualDist = daysList.reduce((acc, d) => {
+        if (d.completed) {
+          if (d.loggedData?.actualKm !== undefined && d.loggedData.actualKm > 0) {
+            return acc + d.loggedData.actualKm;
+          }
+          if (d.plannedKm > 0) return acc + d.plannedKm;
+        }
+        return acc;
+      }, 0);
+
+      const totalSeconds = daysList.reduce((acc, d) => {
+        if (d.completed && d.loggedData?.duration) {
+          return acc + parseDurationToSeconds(d.loggedData.duration);
+        }
+        return acc;
+      }, 0);
+
+      return {
+        ...w,
+        days: newDays,
+        actualDist: totalActualDist > 0 ? parseFloat(totalActualDist.toFixed(1)) : undefined,
+        totalDuration: totalSeconds > 0 ? formatSecondsToDuration(totalSeconds) : undefined,
+        avgPace: totalActualDist > 0 && totalSeconds > 0 ? calculatePacePerKm(totalActualDist, totalSeconds) : undefined,
+      };
+    });
+
+    setPlan(updatedPlan);
+
+    if (activeWorkout && activeWorkout.weekNumber === weekNumber) {
+      setActiveWorkout({
+        weekNumber,
+        day: {
+          ...activeWorkout.day,
+          completed: false,
+          loggedData: undefined,
+        },
+      });
+    }
+  };
+
+  // Update planned workout schedule (built plan or imported plan)
+  const handleUpdatePlanDay = (
+    weekNumber: number,
+    dayKey: keyof TrainingWeek['days'],
+    updatedFields: Partial<DaySchedule>
+  ) => {
+    const updatedPlan = plan.map((w) => {
+      if (w.weekNumber !== weekNumber) return w;
+
+      const updatedDay: DaySchedule = {
+        ...w.days[dayKey],
+        ...updatedFields,
+      };
+
+      const newDays = {
+        ...w.days,
+        [dayKey]: updatedDay,
+      };
+
+      // Recalculate planned weekly distance
+      const daysList = Object.values(newDays) as DaySchedule[];
+      const newPlannedDist = daysList.reduce((acc, d) => acc + (d.plannedKm || 0), 0);
+
+      return {
+        ...w,
+        plannedDist: parseFloat(newPlannedDist.toFixed(1)),
+        days: newDays,
+      };
+    });
+
+    setPlan(updatedPlan);
+
+    if (activeWorkout && activeWorkout.weekNumber === weekNumber) {
+      setActiveWorkout({
+        weekNumber,
+        day: {
+          ...activeWorkout.day,
+          ...updatedFields,
+        },
+      });
     }
   };
 
@@ -238,8 +352,12 @@ export default function App() {
 
       const daysList = Object.values(newDays) as DaySchedule[];
       const totalActualDist = daysList.reduce((acc, d) => {
-        if (d.loggedData?.actualKm) return acc + d.loggedData.actualKm;
-        if (d.completed && d.plannedKm > 0) return acc + d.plannedKm;
+        if (d.completed) {
+          if (d.loggedData?.actualKm !== undefined && d.loggedData.actualKm > 0) {
+            return acc + d.loggedData.actualKm;
+          }
+          if (d.plannedKm > 0) return acc + d.plannedKm;
+        }
         return acc;
       }, 0);
 
@@ -293,8 +411,10 @@ export default function App() {
   const rawActualKm = plan.reduce((acc, w) => {
     if (w.actualDist) return acc + w.actualDist;
     const weekActual = (Object.values(w.days) as DaySchedule[]).reduce((s, d) => {
-      if (d.loggedData?.actualKm) return s + d.loggedData.actualKm;
-      if (d.completed && d.plannedKm > 0) return s + d.plannedKm;
+      if (d.completed) {
+        if (d.loggedData?.actualKm !== undefined && d.loggedData.actualKm > 0) return s + d.loggedData.actualKm;
+        if (d.plannedKm > 0) return s + d.plannedKm;
+      }
       return s;
     }, 0);
     return acc + weekActual;
@@ -332,7 +452,7 @@ export default function App() {
       : 'Periodized Training Plan';
 
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-100 selection:bg-amber-500 selection:text-stone-950">
+    <div className="min-h-screen bg-[#0B0E14] text-slate-100 selection:bg-amber-400 selection:text-slate-950 font-sans">
       {/* Sticky Navigation Header */}
       <Navbar
         onOpenBackupModal={() => setIsBackupModalOpen(true)}
@@ -351,7 +471,7 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <main className="max-w-[1600px] w-full mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-6">
+      <main className="max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Next Workout & Interactive Volume Chart */}
         <AnalyticsOverview
           plan={plan}
@@ -368,23 +488,23 @@ export default function App() {
               <h2 className="text-xl font-bold text-white tracking-tight">
                 {planMeta.title} Schedule
               </h2>
-              <p className="text-xs text-stone-400">
-                Click any day to view details, pacing guidelines, or log actual miles & duration
+              <p className="text-xs text-slate-400 mt-0.5">
+                Click any day to view details, pacing guidelines, or log actual distance & duration
               </p>
             </div>
 
-            <div className="flex items-center gap-3 text-xs">
-              <span className="text-stone-400">
-                Showing <strong className="text-white">{filteredWeeks.length}</strong> of{' '}
+            <div className="flex items-center gap-3 text-xs font-mono">
+              <span className="text-slate-400">
+                Showing <strong className="text-white font-semibold">{filteredWeeks.length}</strong> of{' '}
                 {plan.length} weeks
               </span>
               {selectedPhase !== 'All Weeks' && (
                 <button
                   type="button"
                   onClick={() => setSelectedPhase('All Weeks')}
-                  className="text-amber-400 hover:underline"
+                  className="text-amber-400 hover:text-amber-300 font-semibold transition-colors"
                 >
-                  View all
+                  View All
                 </button>
               )}
             </div>
@@ -406,7 +526,7 @@ export default function App() {
         </div>
       </main>
 
-      {/* Workout Detail / Logger Modal */}
+      {/* Workout Detail / Logger & Plan Editor Modal */}
       {activeWorkout && (
         <WorkoutDetailModal
           day={activeWorkout.day}
@@ -414,6 +534,8 @@ export default function App() {
           isOpen={!!activeWorkout}
           onClose={() => setActiveWorkout(null)}
           onSaveLog={handleSaveWorkoutLog}
+          onDeleteLog={handleDeleteWorkoutLog}
+          onUpdatePlanDay={handleUpdatePlanDay}
           onOpenTimer={() => setIsTimerModalOpen(true)}
         />
       )}

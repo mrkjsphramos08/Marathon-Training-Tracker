@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import { TrainingWeek } from '../types';
 import { parseCsvToPlan, generateSampleCsvTemplate } from '../utils/csvPlanParser';
-import { USER_21_WEEK_CSV } from '../data/plan21WeekData';
 
 interface DataBackupModalProps {
   isOpen: boolean;
@@ -94,11 +93,6 @@ export const DataBackupModal: React.FC<DataBackupModalProps> = ({
     processCsvText(pastedCsvText);
   };
 
-  const handleLoad21WeekPreset = () => {
-    setPastedCsvText(USER_21_WEEK_CSV);
-    processCsvText(USER_21_WEEK_CSV);
-  };
-
   // Download Sample CSV Template
   const handleDownloadSampleTemplate = () => {
     const templateContent = generateSampleCsvTemplate();
@@ -147,43 +141,43 @@ export const DataBackupModal: React.FC<DataBackupModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
       <div
         id="backup-modal-container"
-        className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto shadow-2xl text-stone-100 flex flex-col"
+        className="bg-[#12161F] border border-white/[0.08] rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto shadow-2xl text-slate-100 flex flex-col"
       >
         {/* Header */}
-        <div className="sticky top-0 bg-stone-900/95 backdrop-blur px-6 py-4 border-b border-stone-800 flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-[#12161F]/95 backdrop-blur-md px-6 py-4 border-b border-white/[0.08] flex items-center justify-between z-10">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-              <FileSpreadsheet className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-lg bg-emerald-400/10 text-emerald-400 flex items-center justify-center border border-emerald-400/20 shrink-0">
+              <FileSpreadsheet className="w-4 h-4" />
             </div>
             <div>
               <h2 className="text-base font-bold text-white leading-tight">
                 Import, Export & Data Backup
               </h2>
-              <p className="text-xs text-stone-400">
+              <p className="text-xs text-slate-400 font-mono mt-0.5">
                 Load custom CSVs from Excel, export data, or generate plans
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-stone-400 hover:text-white hover:bg-stone-800 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="px-6 pt-3 flex border-b border-stone-800 gap-2">
+        <div className="px-6 pt-3 flex border-b border-white/[0.08] gap-2">
           <button
             type="button"
             onClick={() => setActiveTab('csv')}
-            className={`pb-3 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 ${
+            className={`pb-3 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5 ${
               activeTab === 'csv'
-                ? 'border-emerald-400 text-emerald-400'
-                : 'border-transparent text-stone-400 hover:text-stone-200'
+                ? 'border-amber-400 text-amber-400'
+                : 'border-transparent text-slate-400 hover:text-white'
             }`}
           >
             <FileSpreadsheet className="w-4 h-4" />
@@ -193,10 +187,10 @@ export const DataBackupModal: React.FC<DataBackupModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('export')}
-            className={`pb-3 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 ${
+            className={`pb-3 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5 ${
               activeTab === 'export'
-                ? 'border-emerald-400 text-emerald-400'
-                : 'border-transparent text-stone-400 hover:text-stone-200'
+                ? 'border-amber-400 text-amber-400'
+                : 'border-transparent text-slate-400 hover:text-white'
             }`}
           >
             <Download className="w-4 h-4" />
@@ -206,10 +200,10 @@ export const DataBackupModal: React.FC<DataBackupModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('json')}
-            className={`pb-3 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 ${
+            className={`pb-3 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5 ${
               activeTab === 'json'
-                ? 'border-emerald-400 text-emerald-400'
-                : 'border-transparent text-stone-400 hover:text-stone-200'
+                ? 'border-amber-400 text-amber-400'
+                : 'border-transparent text-slate-400 hover:text-white'
             }`}
           >
             <Upload className="w-4 h-4" />
@@ -218,17 +212,17 @@ export const DataBackupModal: React.FC<DataBackupModalProps> = ({
         </div>
 
         {/* Body */}
-        <div className="p-6 space-y-6 flex-1">
+        <div className="p-6 space-y-5 flex-1">
           {statusMessage && (
-            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+            <div className="p-3 rounded-xl bg-emerald-400/[0.08] border border-emerald-400/30 text-emerald-300 text-xs flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
               <span>{statusMessage}</span>
             </div>
           )}
 
           {errorMessage && (
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <div className="p-3 rounded-xl bg-rose-500/[0.08] border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMessage}</span>
             </div>
           )}
@@ -237,13 +231,13 @@ export const DataBackupModal: React.FC<DataBackupModalProps> = ({
           {activeTab === 'csv' && (
             <div className="space-y-4">
               {/* Quick in-app builder shortcut banner */}
-              <div className="p-3.5 rounded-xl bg-gradient-to-r from-amber-500/15 via-stone-800 to-stone-800 border border-amber-500/30 flex items-center justify-between gap-3">
+              <div className="p-3.5 rounded-xl bg-[#181E2A] border border-white/[0.08] flex items-center justify-between gap-3">
                 <div className="space-y-0.5">
-                  <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                  <div className="text-xs font-semibold text-white flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Want to build a plan without a spreadsheet?</span>
+                    <span>Build a plan without a spreadsheet?</span>
                   </div>
-                  <p className="text-[11px] text-stone-300">
+                  <p className="text-[11px] text-slate-400">
                     Use our interactive in-app plan builder with auto-calculated pacing zones.
                   </p>
                 </div>
@@ -253,35 +247,35 @@ export const DataBackupModal: React.FC<DataBackupModalProps> = ({
                     onClose();
                     onOpenPlanCreator();
                   }}
-                  className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs flex-shrink-0 shadow transition-all"
+                  className="px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-semibold text-xs shrink-0 transition-all active:scale-95"
                 >
                   Create Plan
                 </button>
               </div>
 
               {/* Step 1: Download Template */}
-              <div className="p-4 rounded-xl bg-stone-800/80 border border-stone-700/80 space-y-2">
+              <div className="p-4 rounded-xl bg-[#181E2A] border border-white/[0.06] space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                  <span className="text-xs font-semibold text-white flex items-center gap-1.5">
                     <FileDown className="w-4 h-4 text-emerald-400" />
                     1. Get the Blank CSV Template
                   </span>
                   <button
                     type="button"
                     onClick={() => setShowCsvHelp(!showCsvHelp)}
-                    className="text-[11px] text-stone-400 hover:text-emerald-400 flex items-center gap-1"
+                    className="text-[11px] text-slate-400 hover:text-amber-400 flex items-center gap-1 font-mono transition-colors"
                   >
                     <HelpCircle className="w-3.5 h-3.5" />
                     <span>{showCsvHelp ? 'Hide format' : 'View format'}</span>
                   </button>
                 </div>
-                <p className="text-xs text-stone-400">
+                <p className="text-xs text-slate-400">
                   Download a pre-formatted template with all columns ready for Excel, Google Sheets, or Apple Numbers.
                 </p>
                 <button
                   type="button"
                   onClick={handleDownloadSampleTemplate}
-                  className="w-full py-2 px-3 rounded-lg bg-stone-700 hover:bg-stone-600 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-colors border border-stone-600"
+                  className="w-full py-2 px-3 rounded-lg bg-[#12161F] hover:bg-white/[0.06] text-white font-medium text-xs flex items-center justify-center gap-2 transition-colors border border-white/[0.08]"
                 >
                   <Download className="w-3.5 h-3.5 text-emerald-400" />
                   <span>Download Sample CSV Template (.csv)</span>
@@ -290,54 +284,33 @@ export const DataBackupModal: React.FC<DataBackupModalProps> = ({
 
               {/* Format Help Info Box */}
               {showCsvHelp && (
-                <div className="p-3.5 rounded-xl bg-stone-950/80 border border-stone-800 text-[11px] text-stone-300 space-y-1.5 font-mono overflow-x-auto">
-                  <div className="text-amber-400 font-sans font-bold">Standard Header Layout:</div>
-                  <div className="text-stone-400 text-[10px]">
+                <div className="p-3.5 rounded-xl bg-[#0B0E14] border border-white/[0.08] text-[11px] text-slate-300 space-y-1.5 font-mono overflow-x-auto">
+                  <div className="text-amber-400 font-sans font-semibold">Standard Header Layout:</div>
+                  <div className="text-slate-400 text-[10px]">
                     Week, Phase, Date_Mon, Mon_Type, Mon_Km, Mon_Desc, Tue_Type, Tue_Km, Tue_Desc, ... Sun_Type, Sun_Km, Sun_Desc, Notes
                   </div>
-                  <div className="text-stone-400 font-sans text-[11px] pt-1">
-                    • <strong>Types</strong>: <code className="text-emerald-300">recovery</code>, <code className="text-blue-300">aerobic</code>, <code className="text-orange-300">quality</code>, <code className="text-amber-300">long_run</code>, <code className="text-cyan-300">easy</code>, <code className="text-stone-400">rest</code>
+                  <div className="text-slate-400 font-sans text-[11px] pt-1">
+                    • <strong>Types</strong>: <code className="text-emerald-300">recovery</code>, <code className="text-sky-300">aerobic</code>, <code className="text-orange-300">quality</code>, <code className="text-amber-300">long_run</code>, <code className="text-teal-300">easy</code>, <code className="text-slate-400">rest</code>
                     <br />
                     • <strong>Km</strong>: Decimal or integer distance (e.g. 8, 12.5, 0 for rest)
                   </div>
                 </div>
               )}
 
-              {/* Preset Quick Loader for 21-Week Plan */}
-              <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="space-y-0.5">
-                  <div className="text-xs font-bold text-white flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>21-Week Custom Marathon Plan (Sep 21, 2026 – Feb 14, 2027)</span>
-                  </div>
-                  <p className="text-[11px] text-stone-300">
-                    21 weeks · 1,048 km total · Includes all specific workouts, subtypes, and detailed workout descriptions.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleLoad21WeekPreset}
-                  className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold text-xs flex-shrink-0 shadow transition-all flex items-center justify-center gap-1.5"
-                >
-                  <FileSpreadsheet className="w-3.5 h-3.5" />
-                  <span>Load 21-Week Plan</span>
-                </button>
-              </div>
-
               {/* Step 2: Input Mode Switcher (Paste vs Upload) */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase tracking-wider text-stone-400">
+                  <label className="text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold">
                     2. Import Your Custom Plan
                   </label>
-                  <div className="flex items-center gap-1 bg-stone-800 p-0.5 rounded-lg border border-stone-700">
+                  <div className="flex items-center gap-1 bg-[#181E2A] p-0.5 rounded-lg border border-white/[0.06]">
                     <button
                       type="button"
                       onClick={() => setCsvInputMode('paste')}
                       className={`px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors ${
                         csvInputMode === 'paste'
-                          ? 'bg-emerald-500 text-stone-950'
-                          : 'text-stone-400 hover:text-stone-200'
+                          ? 'bg-amber-400 text-slate-950'
+                          : 'text-slate-400 hover:text-white'
                       }`}
                     >
                       Paste CSV Text
@@ -347,8 +320,8 @@ export const DataBackupModal: React.FC<DataBackupModalProps> = ({
                       onClick={() => setCsvInputMode('upload')}
                       className={`px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors ${
                         csvInputMode === 'upload'
-                          ? 'bg-emerald-500 text-stone-950'
-                          : 'text-stone-400 hover:text-stone-200'
+                          ? 'bg-amber-400 text-slate-950'
+                          : 'text-slate-400 hover:text-white'
                       }`}
                     >
                       Upload File (.csv)
@@ -362,16 +335,16 @@ export const DataBackupModal: React.FC<DataBackupModalProps> = ({
                       value={pastedCsvText}
                       onChange={(e) => setPastedCsvText(e.target.value)}
                       placeholder="Paste your CSV rows here (e.g. Week,Phase,Date_Mon,Mon_Type,Mon_Km,Mon_Desc...)..."
-                      className="w-full h-36 p-3 rounded-xl bg-stone-950 border border-stone-700 text-xs text-stone-200 font-mono placeholder:text-stone-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                      className="w-full h-36 p-3 rounded-xl bg-[#0B0E14] border border-white/[0.08] text-xs text-slate-200 font-mono placeholder:text-slate-600 focus:outline-none focus:border-amber-400"
                     />
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[11px] text-stone-500">
+                      <span className="text-[11px] text-slate-400 font-mono">
                         Directly paste rows copied from your spreadsheet or text editor
                       </span>
                       <button
                         type="button"
                         onClick={handleImportPasted}
-                        className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold text-xs flex items-center gap-1.5 transition-colors shadow"
+                        className="px-4 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-semibold text-xs flex items-center gap-1.5 transition-all active:scale-95"
                       >
                         <ClipboardPaste className="w-3.5 h-3.5" />
                         <span>Load Plan from Pasted CSV</span>
@@ -379,12 +352,12 @@ export const DataBackupModal: React.FC<DataBackupModalProps> = ({
                     </div>
                   </div>
                 ) : (
-                  <label className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-dashed border-stone-700 hover:border-emerald-500/60 bg-stone-800/30 hover:bg-stone-800/60 cursor-pointer transition-colors text-center">
-                    <FileSpreadsheet className="w-7 h-7 text-emerald-400 mb-2" />
-                    <span className="text-xs font-semibold text-stone-200">
+                  <label className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-dashed border-white/[0.12] hover:border-amber-400/60 bg-white/[0.02] hover:bg-white/[0.04] cursor-pointer transition-colors text-center">
+                    <FileSpreadsheet className="w-7 h-7 text-amber-400 mb-2" />
+                    <span className="text-xs font-semibold text-slate-200">
                       Click to browse or drop your CSV file here
                     </span>
-                    <span className="text-[11px] text-stone-500 mt-1">
+                    <span className="text-[11px] text-slate-500 font-mono mt-1">
                       Accepts .csv files exported from Excel or Google Sheets
                     </span>
                     <input
@@ -402,20 +375,20 @@ export const DataBackupModal: React.FC<DataBackupModalProps> = ({
           {/* TAB 2: Export Data */}
           {activeTab === 'export' && (
             <div className="space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-stone-400">
+              <h3 className="text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold">
                 Download Your Current Schedule & Progress
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={onExportCsv}
-                  className="p-4 rounded-xl bg-stone-800/80 hover:bg-stone-700 border border-stone-700 text-left transition-colors space-y-1.5"
+                  className="p-4 rounded-xl bg-[#181E2A] hover:bg-white/[0.06] border border-white/[0.06] text-left transition-colors space-y-1.5 group"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-white text-sm">Download as CSV</span>
+                    <span className="font-semibold text-white text-sm">Download as CSV</span>
                     <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
                   </div>
-                  <p className="text-xs text-stone-400">
+                  <p className="text-xs text-slate-400 leading-relaxed">
                     Full spreadsheet format with all workouts, distances, and pacing notes.
                   </p>
                 </button>
@@ -423,14 +396,14 @@ export const DataBackupModal: React.FC<DataBackupModalProps> = ({
                 <button
                   type="button"
                   onClick={onExportJson}
-                  className="p-4 rounded-xl bg-stone-800/80 hover:bg-stone-700 border border-stone-700 text-left transition-colors space-y-1.5"
+                  className="p-4 rounded-xl bg-[#181E2A] hover:bg-white/[0.06] border border-white/[0.06] text-left transition-colors space-y-1.5 group"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-white text-sm">Download JSON Backup</span>
+                    <span className="font-semibold text-white text-sm">Download JSON Backup</span>
                     <Download className="w-4 h-4 text-amber-400" />
                   </div>
-                  <p className="text-xs text-stone-400">
-                    Raw JSON backup file to restore logged runs across different browsers.
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Raw JSON backup file to restore logged runs across different devices.
                   </p>
                 </button>
               </div>
@@ -440,16 +413,16 @@ export const DataBackupModal: React.FC<DataBackupModalProps> = ({
           {/* TAB 3: JSON Backup / Restore */}
           {activeTab === 'json' && (
             <div className="space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-stone-400">
+              <h3 className="text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold">
                 Restore from JSON Backup File
               </h3>
-              <label className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-dashed border-stone-700 hover:border-amber-500/60 bg-stone-800/30 hover:bg-stone-800/60 cursor-pointer transition-colors text-center">
+              <label className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-dashed border-white/[0.12] hover:border-amber-400/60 bg-white/[0.02] hover:bg-white/[0.04] cursor-pointer transition-colors text-center">
                 <Upload className="w-7 h-7 text-amber-400 mb-2" />
-                <span className="text-xs font-semibold text-stone-200">
+                <span className="text-xs font-semibold text-slate-200">
                   Click to upload backup JSON file
                 </span>
-                <span className="text-[11px] text-stone-500 mt-1">
-                  Restores entire schedule and your logged run data
+                <span className="text-[11px] text-slate-500 font-mono mt-1">
+                  Restores entire schedule and your logged workout data
                 </span>
                 <input
                   type="file"
@@ -462,21 +435,21 @@ export const DataBackupModal: React.FC<DataBackupModalProps> = ({
           )}
 
           {/* Reset section */}
-          <div className="pt-4 border-t border-stone-800 text-xs">
+          <div className="pt-4 border-t border-white/[0.08] text-xs">
             {showResetConfirm ? (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 space-y-2">
+              <div className="p-3.5 rounded-xl bg-rose-500/[0.08] border border-rose-500/30 space-y-2">
                 <div className="font-semibold text-rose-300">
                   Are you sure you want to reset your training schedule?
                 </div>
-                <p className="text-[11px] text-stone-300">
-                  This will restore the original 18-week plan and clear any custom schedule or unsaved logs.
+                <p className="text-[11px] text-slate-300">
+                  This will restore the original plan and clear any custom schedule or unsaved logs.
                 </p>
                 <div className="flex items-center gap-2 pt-1">
                   <button
                     id="btn-confirm-reset-yes"
                     type="button"
                     onClick={handleConfirmReset}
-                    className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs"
+                    className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition-colors"
                   >
                     Yes, Reset Schedule
                   </button>
@@ -484,7 +457,7 @@ export const DataBackupModal: React.FC<DataBackupModalProps> = ({
                     id="btn-confirm-reset-cancel"
                     type="button"
                     onClick={() => setShowResetConfirm(false)}
-                    className="px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs"
+                    className="px-3 py-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-slate-300 text-xs transition-colors"
                   >
                     Cancel
                   </button>
@@ -493,14 +466,14 @@ export const DataBackupModal: React.FC<DataBackupModalProps> = ({
             ) : (
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="font-medium text-stone-300">Reset Training Plan</div>
-                  <div className="text-[11px] text-stone-500">Restore the default 18-week schedule</div>
+                  <div className="font-medium text-slate-300">Reset Training Plan</div>
+                  <div className="text-[11px] text-slate-500 font-mono">Restore the default 21-week baseline</div>
                 </div>
                 <button
                   id="btn-trigger-reset"
                   type="button"
                   onClick={() => setShowResetConfirm(true)}
-                  className="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 transition-colors flex items-center gap-1.5"
+                  className="px-3 py-1.5 rounded-lg bg-rose-500/[0.08] hover:bg-rose-500/[0.16] text-rose-300 border border-rose-500/30 transition-colors flex items-center gap-1.5 font-mono"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>Reset to Default</span>

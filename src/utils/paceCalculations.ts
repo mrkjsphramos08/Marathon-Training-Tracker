@@ -116,3 +116,30 @@ export const calculateZonesForGoalTime = (hours: number, minutes: number): PaceZ
     },
   ];
 };
+
+/**
+ * Splits raw workout title into clean main title and short description badge.
+ * e.g. "Quality Workout (Easy Fartlek)" -> mainTitle: "Quality Workout", badge: "Easy Fartlek"
+ * e.g. "Long Run (Time on Feet)" -> mainTitle: "Long Run", badge: "Time on Feet"
+ */
+export const formatWorkoutDisplay = (
+  title: string,
+  subtype?: string
+): { mainTitle: string; badge?: string } => {
+  if (!title) return { mainTitle: '', badge: subtype };
+
+  // If subtype already provided, strip it from title if present
+  if (subtype) {
+    const escaped = subtype.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const clean = title.replace(new RegExp(`\\s*\\(${escaped}\\)\\s*$`, 'i'), '').trim();
+    return { mainTitle: clean || title, badge: subtype };
+  }
+
+  // If no subtype, try extracting parenthetical from title
+  const match = title.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
+  if (match && match[1].trim() && match[2].trim()) {
+    return { mainTitle: match[1].trim(), badge: match[2].trim() };
+  }
+
+  return { mainTitle: title, badge: undefined };
+};
