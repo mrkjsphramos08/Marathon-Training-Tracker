@@ -144,6 +144,8 @@ export const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
 
   const getWorkoutBadge = (type: string) => {
     switch (type) {
+      case 'race':
+        return 'bg-rose-500/20 text-rose-300 border-rose-500/40 font-bold';
       case 'recovery':
       case 'easy':
         return 'bg-emerald-400/10 text-emerald-300 border-emerald-400/20';
@@ -550,10 +552,11 @@ export const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
                     }}
                     className="w-full px-3 py-2 rounded-xl bg-[#181E2A] border border-white/[0.08] text-white focus:outline-none focus:border-amber-400 text-sm"
                   >
-                    <option value="easy">Easy Aerobic Run</option>
-                    <option value="aerobic">Aerobic Base Run</option>
-                    <option value="quality">Quality (Intervals / Tempo / Fartlek)</option>
+                    <option value="race">🏁 Race Day / Goal Event</option>
                     <option value="long_run">Long Run</option>
+                    <option value="quality">Quality (Intervals / Tempo / Fartlek)</option>
+                    <option value="aerobic">Aerobic Base Run</option>
+                    <option value="easy">Easy Aerobic Run</option>
                     <option value="recovery">Recovery Run</option>
                     <option value="rest">Rest & Active Recovery</option>
                   </select>

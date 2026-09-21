@@ -76,7 +76,8 @@ function normalizeWorkoutType(rawType: string, distance: number): WorkoutType {
   if (t.includes('recov')) return 'recovery';
   if (t.includes('aerob') || t.includes('mid-long') || t.includes('base')) return 'aerobic';
   if (t.includes('qual') || t.includes('tempo') || t.includes('interval') || t.includes('speed') || t.includes('repeat') || t.includes('threshold') || t.includes('fartlek')) return 'quality';
-  if (t.includes('long') || t.includes('marathon') || t.includes('race')) return 'long_run';
+  if (t.includes('race')) return 'race';
+  if (t.includes('long') || t.includes('marathon')) return 'long_run';
   if (t.includes('easy') || t.includes('shake')) return 'easy';
   
   // Default based on distance heuristics

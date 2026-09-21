@@ -44,6 +44,11 @@ export const WeekCard: React.FC<WeekCardProps> = ({
 
   const getTypeAccent = (type: string) => {
     switch (type) {
+      case 'race':
+        return {
+          dot: 'bg-rose-400 animate-pulse',
+          badge: 'bg-rose-500/20 text-rose-300 border-rose-500/40 font-bold',
+        };
       case 'quality':
         return {
           dot: 'bg-orange-400',
@@ -184,6 +189,8 @@ export const WeekCard: React.FC<WeekCardProps> = ({
               className={`group relative p-3 rounded-xl border text-left cursor-pointer transition-all duration-150 flex flex-col justify-between min-h-[124px] ${
                 day.completed
                   ? 'bg-emerald-500/[0.06] border-emerald-500/30 hover:border-emerald-500/50 shadow-sm'
+                  : day.type === 'race'
+                  ? 'bg-rose-500/[0.08] border-rose-500/30 hover:border-rose-500/50 shadow-[0_0_15px_rgba(244,63,94,0.08)] ring-1 ring-rose-500/20'
                   : isRest
                   ? 'bg-[#151922]/50 border-white/[0.04] hover:border-white/[0.08] hover:bg-[#181E2A]'
                   : 'bg-[#181E2A] border-white/[0.06] hover:border-white/[0.14] hover:bg-[#1C2332]'
@@ -228,7 +235,13 @@ export const WeekCard: React.FC<WeekCardProps> = ({
                     <>
                       <div
                         className={`text-xs font-semibold leading-snug line-clamp-2 ${
-                          day.completed ? 'text-emerald-200' : isRest ? 'text-slate-400' : 'text-white'
+                          day.completed
+                            ? 'text-emerald-200'
+                            : isRest
+                            ? 'text-slate-400'
+                            : day.type === 'race'
+                            ? 'text-rose-200 font-bold'
+                            : 'text-white'
                         }`}
                       >
                         {isRest ? 'Rest Day' : mainTitle}
@@ -237,7 +250,13 @@ export const WeekCard: React.FC<WeekCardProps> = ({
                       {/* Workout Subtype / Short Description Badge */}
                       {badge && !isRest && (
                         <div className="mt-1 flex flex-wrap gap-1">
-                          <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-amber-400/10 text-amber-300 border border-amber-400/20 leading-tight">
+                          <span
+                            className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-mono leading-tight ${
+                              day.type === 'race'
+                                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold'
+                                : 'bg-amber-400/10 text-amber-300 border border-amber-400/20 font-medium'
+                            }`}
+                          >
                             {badge}
                           </span>
                         </div>

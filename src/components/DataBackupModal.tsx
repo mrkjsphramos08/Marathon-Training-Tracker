@@ -290,7 +290,7 @@ export const DataBackupModal: React.FC<DataBackupModalProps> = ({
                     Week, Phase, Date_Mon, Mon_Type, Mon_Km, Mon_Desc, Tue_Type, Tue_Km, Tue_Desc, ... Sun_Type, Sun_Km, Sun_Desc, Notes
                   </div>
                   <div className="text-slate-400 font-sans text-[11px] pt-1">
-                    • <strong>Types</strong>: <code className="text-emerald-300">recovery</code>, <code className="text-sky-300">aerobic</code>, <code className="text-orange-300">quality</code>, <code className="text-amber-300">long_run</code>, <code className="text-teal-300">easy</code>, <code className="text-slate-400">rest</code>
+                    • <strong>Types</strong>: <code className="text-rose-300">race</code>, <code className="text-emerald-300">recovery</code>, <code className="text-sky-300">aerobic</code>, <code className="text-orange-300">quality</code>, <code className="text-amber-300">long_run</code>, <code className="text-teal-300">easy</code>, <code className="text-slate-400">rest</code>
                     <br />
                     • <strong>Km</strong>: Decimal or integer distance (e.g. 8, 12.5, 0 for rest)
                   </div>

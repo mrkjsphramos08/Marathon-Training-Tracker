@@ -1440,7 +1440,8 @@ export const INITIAL_PLAN: TrainingWeek[] = [
       sunday: {
         dayName: 'Sunday',
         dateStr: 'Feb 14',
-        type: 'long_run',
+        type: 'race',
+        subtype: 'Goal Race',
         title: 'MARATHON RACE DAY! 🏁',
         plannedKm: 42.2,
         targetPace: '5:40 GMP',

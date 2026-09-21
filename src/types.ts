@@ -4,7 +4,8 @@ export type WorkoutType =
   | 'rest'
   | 'quality'
   | 'easy'
-  | 'long_run';
+  | 'long_run'
+  | 'race';
 
 export interface LoggedWorkoutData {
   actualKm: number;

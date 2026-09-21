@@ -126,13 +126,32 @@ export const generateCustomPlan = (opts: PlanGeneratorOptions): TrainingWeek[] =
     const isCutbackWeek = w % 4 === 0 && w < weeksCount - taperWeeks;
     const isRaceWeek = w === weeksCount;
 
+    // Race Day configuration
+    let raceEventTitle = 'RACE DAY! 🏁';
+    let raceEventDetails = `🎯 RACE DAY! Goal distance: ${targetDistanceKm} km at target pace ${gmpPaceStr}. Trust your training, fuel properly, and finish strong!`;
+    if (event === 'marathon') {
+      raceEventTitle = 'MARATHON RACE DAY! 🏁';
+      raceEventDetails = `🎯 42.2 km MARATHON RACE DAY! Goal pace: ${gmpPaceStr}. Fuel every 5km, stay patient in the first half, and trust your training!`;
+    } else if (event === 'half_marathon') {
+      raceEventTitle = 'HALF MARATHON RACE DAY! 🏁';
+      raceEventDetails = `🎯 21.1 km HALF MARATHON RACE DAY! Goal pace: ${gmpPaceStr}. Settle into pace early, stay focused through km 10, and finish with power!`;
+    } else if (event === '10k') {
+      raceEventTitle = '10K RACE DAY! 🏁';
+      raceEventDetails = `🎯 10K RACE DAY! Goal pace: ${gmpPaceStr}. Controlled first 3k, hold strong through 7k, and kick hard to the finish!`;
+    } else if (event === '5k') {
+      raceEventTitle = '5K RACE DAY! 🏁';
+      raceEventDetails = `🎯 5K RACE DAY! Goal pace: ${gmpPaceStr}. High cadence, smooth rhythm, and leave everything on the course!`;
+    } else {
+      raceEventTitle = `${targetDistanceKm} km RACE DAY! 🏁`;
+    }
+
     // Calculate long run distance
     let longRunKm = 0;
     let longRunDetails = '';
 
     if (isRaceWeek) {
       longRunKm = targetDistanceKm;
-      longRunDetails = `🎯 RACE DAY! Goal distance ${targetDistanceKm} km at target pace ${gmpPaceStr}. Trust your training, fuel every 5km, and finish strong!`;
+      longRunDetails = raceEventDetails;
     } else if (w > weeksCount - taperWeeks) {
       // Taper weeks
       const taperStep = weeksCount - w; // e.g. 2, 1
@@ -164,18 +183,19 @@ export const generateCustomPlan = (opts: PlanGeneratorOptions): TrainingWeek[] =
     }
 
     // Mid-week distances based on level & daysPerWeek
-    let recoveryKm = isRaceWeek ? 4 : isCutbackWeek ? 5 : level === 'advanced' ? 9 : level === 'intermediate' ? 7 : 5;
-    let aerobicKm = isRaceWeek ? 5 : isCutbackWeek ? 8 : level === 'advanced' ? 14 : level === 'intermediate' ? 11 : 8;
-    let qualityKm = isRaceWeek ? 4 : isCutbackWeek ? 7 : level === 'advanced' ? 13 : level === 'intermediate' ? 10 : 7;
-    let easyKm = isRaceWeek ? 3 : isCutbackWeek ? 4 : level === 'advanced' ? 6 : level === 'intermediate' ? 5 : 4;
+    const isShortEvent = targetDistanceKm <= 10;
+    let recoveryKm = isRaceWeek ? (isShortEvent ? 2 : 4) : isCutbackWeek ? 5 : level === 'advanced' ? 9 : level === 'intermediate' ? 7 : 5;
+    let aerobicKm = isRaceWeek ? (isShortEvent ? 3 : 5) : isCutbackWeek ? 8 : level === 'advanced' ? 14 : level === 'intermediate' ? 11 : 8;
+    let qualityKm = isRaceWeek ? (isShortEvent ? 3 : 4) : isCutbackWeek ? 7 : level === 'advanced' ? 13 : level === 'intermediate' ? 10 : 7;
+    let easyKm = isRaceWeek ? (isShortEvent ? 2 : 3) : isCutbackWeek ? 4 : level === 'advanced' ? 6 : level === 'intermediate' ? 5 : 4;
 
     // Quality Workout Details
     let qualityDetails = '';
     let qualityTitle = `${qualityKm} km Quality Workout`;
 
     if (isRaceWeek) {
-      qualityTitle = '4 km Pre-Race Tune-up';
-      qualityDetails = `1.5 km easy warm-up, 4x200m strides @ ${gmpPaceStr}, 1.5 km cool-down. Keep legs sharp and light.`;
+      qualityTitle = `${qualityKm} km Pre-Race Tune-up`;
+      qualityDetails = `1.5 km easy warm-up, 4x100m strides @ ${gmpPaceStr}, 1 km cool-down. Keep legs sharp, relaxed, and light.`;
     } else if (w % 2 === 1) {
       // Intervals
       if (w <= 4) {
@@ -206,7 +226,8 @@ export const generateCustomPlan = (opts: PlanGeneratorOptions): TrainingWeek[] =
       title: string,
       km: number,
       details: string,
-      targetPace?: string
+      targetPace?: string,
+      subtype?: string
     ): DaySchedule => {
       const dDate = addDays(mondayDate, dayOffset);
       return {
@@ -218,22 +239,56 @@ export const generateCustomPlan = (opts: PlanGeneratorOptions): TrainingWeek[] =
         plannedKm: km,
         details,
         targetPace,
+        subtype,
         completed: false,
       };
     };
 
+    const isLongRunSat = longRunDay === 'saturday';
+
     const makeRestDay = (dayName: DaySchedule['dayName'], dayOffset: number): DaySchedule => {
       const dDate = addDays(mondayDate, dayOffset);
+      const isPreRace = isRaceWeek && ((isLongRunSat && dayName === 'Friday') || (!isLongRunSat && dayName === 'Saturday'));
       return {
         dayName,
         dateStr: formatDateLabel(dDate),
         fullDate: dDate.toISOString().split('T')[0],
         type: 'rest',
-        title: 'Rest & Recovery',
+        title: isPreRace ? 'Pre-Race Rest & Hydration' : 'Rest & Recovery',
         plannedKm: 0,
-        details: 'Full rest day. Foam roll, stretch, hydrate, and get quality sleep.',
+        details: isPreRace
+          ? 'Pre-race preparation. Rest your legs, hydrate with electrolytes, lay out your race kit & bib, and sleep early.'
+          : 'Full rest day. Foam roll, stretch, hydrate, and get quality sleep.',
         completed: false,
       };
+    };
+
+    // Weekend Workout: Distinct Race Day on final week, Long Run on training weeks
+    const weekendWorkoutType: WorkoutType = isRaceWeek ? 'race' : 'long_run';
+    const weekendRunKm = isRaceWeek ? targetDistanceKm : longRunKm;
+    const weekendTitle = isRaceWeek ? raceEventTitle : `${longRunKm} km Long Run`;
+    const weekendSubtype = isRaceWeek
+      ? 'Goal Race'
+      : phase === 'Peak & Specificity' && w % 2 === 1
+      ? 'Fast Finish GMP'
+      : undefined;
+    const weekendDetails = isRaceWeek ? raceEventDetails : longRunDetails;
+    const weekendTargetPace = isRaceWeek ? gmpPaceStr : aerobicPaceStr;
+
+    const buildWeekendDay = (name: 'Saturday' | 'Sunday', offset: number, isSelectedDay: boolean) => {
+      if (isSelectedDay) {
+        return makeDay(
+          name,
+          offset,
+          weekendWorkoutType,
+          weekendTitle,
+          weekendRunKm,
+          weekendDetails,
+          weekendTargetPace,
+          weekendSubtype
+        );
+      }
+      return makeRestDay(name, offset);
     };
 
     // Assign workouts across week based on frequency & preferred long run day
@@ -245,60 +300,42 @@ export const generateCustomPlan = (opts: PlanGeneratorOptions): TrainingWeek[] =
     let saturday: DaySchedule;
     let sunday: DaySchedule;
 
-    const isLongRunSat = longRunDay === 'saturday';
-
     if (daysPerWeek === 3) {
-      // 3 days: Tue (Aerobic), Thu (Quality), Weekend (Long Run)
+      // 3 days: Tue (Aerobic), Thu (Quality), Weekend (Long Run / Race Day)
       monday = makeRestDay('Monday', 0);
       tuesday = makeDay('Tuesday', 1, 'aerobic', `${aerobicKm} km Aerobic Run`, aerobicKm, `Steady aerobic base run at ${aerobicPaceStr}.`, aerobicPaceStr);
       wednesday = makeRestDay('Wednesday', 2);
       thursday = makeDay('Thursday', 3, 'quality', qualityTitle, qualityKm, qualityDetails, tempoPaceStr);
       friday = makeRestDay('Friday', 4);
-      saturday = isLongRunSat
-        ? makeDay('Saturday', 5, 'long_run', `${longRunKm} km Long Run`, longRunKm, longRunDetails, isRaceWeek ? gmpPaceStr : aerobicPaceStr)
-        : makeRestDay('Saturday', 5);
-      sunday = !isLongRunSat
-        ? makeDay('Sunday', 6, 'long_run', `${longRunKm} km Long Run`, longRunKm, longRunDetails, isRaceWeek ? gmpPaceStr : aerobicPaceStr)
-        : makeRestDay('Sunday', 6);
+      saturday = buildWeekendDay('Saturday', 5, isLongRunSat);
+      sunday = buildWeekendDay('Sunday', 6, !isLongRunSat);
     } else if (daysPerWeek === 4) {
-      // 4 days: Mon (Recovery), Tue (Aerobic), Thu (Quality), Weekend (Long Run)
+      // 4 days: Mon (Recovery), Tue (Aerobic), Thu (Quality), Weekend (Long Run / Race Day)
       monday = makeDay('Monday', 0, 'recovery', `${recoveryKm} km Recovery Jog`, recoveryKm, `Flush out legs at very easy pace (${recoveryPaceStr}). Keep effort minimal.`, recoveryPaceStr);
       tuesday = makeDay('Tuesday', 1, 'aerobic', `${aerobicKm} km Aerobic Volume`, aerobicKm, `Smooth easy aerobic run at ${aerobicPaceStr}. Accumulate volume.`, aerobicPaceStr);
       wednesday = makeRestDay('Wednesday', 2);
       thursday = makeDay('Thursday', 3, 'quality', qualityTitle, qualityKm, qualityDetails, tempoPaceStr);
       friday = makeRestDay('Friday', 4);
-      saturday = isLongRunSat
-        ? makeDay('Saturday', 5, 'long_run', `${longRunKm} km Long Run`, longRunKm, longRunDetails, isRaceWeek ? gmpPaceStr : aerobicPaceStr)
-        : makeRestDay('Saturday', 5);
-      sunday = !isLongRunSat
-        ? makeDay('Sunday', 6, 'long_run', `${longRunKm} km Long Run`, longRunKm, longRunDetails, isRaceWeek ? gmpPaceStr : aerobicPaceStr)
-        : makeRestDay('Sunday', 6);
+      saturday = buildWeekendDay('Saturday', 5, isLongRunSat);
+      sunday = buildWeekendDay('Sunday', 6, !isLongRunSat);
     } else if (daysPerWeek === 5) {
-      // 5 days: Mon (Recovery), Tue (Aerobic), Wed (Rest), Thu (Quality), Fri (Easy), Weekend (Long Run)
+      // 5 days: Mon (Recovery), Tue (Aerobic), Wed (Rest), Thu (Quality), Fri (Easy), Weekend (Long Run / Race Day)
       monday = makeDay('Monday', 0, 'recovery', `${recoveryKm} km Recovery Run`, recoveryKm, `Slow conversational flush run (${recoveryPaceStr}).`, recoveryPaceStr);
       tuesday = makeDay('Tuesday', 1, 'aerobic', `${aerobicKm} km Aerobic Mid-Long`, aerobicKm, `Smooth continuous aerobic volume (${aerobicPaceStr}).`, aerobicPaceStr);
       wednesday = makeRestDay('Wednesday', 2);
       thursday = makeDay('Thursday', 3, 'quality', qualityTitle, qualityKm, qualityDetails, tempoPaceStr);
       friday = makeDay('Friday', 4, 'easy', `${easyKm} km Easy Shakeout`, easyKm, `Short light jog (${easyPaceStr}) to keep legs springy.`, easyPaceStr);
-      saturday = isLongRunSat
-        ? makeDay('Saturday', 5, 'long_run', `${longRunKm} km Long Run`, longRunKm, longRunDetails, isRaceWeek ? gmpPaceStr : aerobicPaceStr)
-        : makeRestDay('Saturday', 5);
-      sunday = !isLongRunSat
-        ? makeDay('Sunday', 6, 'long_run', `${longRunKm} km Long Run`, longRunKm, longRunDetails, isRaceWeek ? gmpPaceStr : aerobicPaceStr)
-        : makeRestDay('Sunday', 6);
+      saturday = buildWeekendDay('Saturday', 5, isLongRunSat);
+      sunday = buildWeekendDay('Sunday', 6, !isLongRunSat);
     } else {
-      // 6 days: Mon (Recovery), Tue (Aerobic), Wed (Easy/Aerobic), Thu (Quality), Fri (Easy), Weekend (Long Run)
+      // 6 days: Mon (Recovery), Tue (Aerobic), Wed (Easy/Aerobic), Thu (Quality), Fri (Easy), Weekend (Long Run / Race Day)
       monday = makeDay('Monday', 0, 'recovery', `${recoveryKm} km Recovery Run`, recoveryKm, `Slow conversational recovery (${recoveryPaceStr}).`, recoveryPaceStr);
       tuesday = makeDay('Tuesday', 1, 'aerobic', `${aerobicKm} km Aerobic Volume`, aerobicKm, `Steady aerobic base run (${aerobicPaceStr}).`, aerobicPaceStr);
       wednesday = makeDay('Wednesday', 2, 'aerobic', `${Math.round(aerobicKm * 0.75)} km Aerobic Run`, Math.round(aerobicKm * 0.75), `Mid-week aerobic miles at ${aerobicPaceStr}.`, aerobicPaceStr);
       thursday = makeDay('Thursday', 3, 'quality', qualityTitle, qualityKm, qualityDetails, tempoPaceStr);
       friday = makeDay('Friday', 4, 'easy', `${easyKm} km Shakeout`, easyKm, `Light shakeout jog at ${easyPaceStr}.`, easyPaceStr);
-      saturday = isLongRunSat
-        ? makeDay('Saturday', 5, 'long_run', `${longRunKm} km Long Run`, longRunKm, longRunDetails, isRaceWeek ? gmpPaceStr : aerobicPaceStr)
-        : makeRestDay('Saturday', 5);
-      sunday = !isLongRunSat
-        ? makeDay('Sunday', 6, 'long_run', `${longRunKm} km Long Run`, longRunKm, longRunDetails, isRaceWeek ? gmpPaceStr : aerobicPaceStr)
-        : makeRestDay('Sunday', 6);
+      saturday = buildWeekendDay('Saturday', 5, isLongRunSat);
+      sunday = buildWeekendDay('Sunday', 6, !isLongRunSat);
     }
 
     const days = {

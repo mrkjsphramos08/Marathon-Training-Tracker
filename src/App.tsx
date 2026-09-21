@@ -28,7 +28,70 @@ interface PlanMetadata {
   eventName?: string;
 }
 
-const DEFAULT_PLAN: TrainingWeek[] = INITIAL_PLAN;
+function sanitizePlanRaceDays(weeks: TrainingWeek[]): TrainingWeek[] {
+  if (!Array.isArray(weeks) || weeks.length === 0) return weeks;
+  const lastWeekNum = weeks.length;
+
+  return weeks.map((week) => {
+    const isLastWeek = week.weekNumber === lastWeekNum;
+    if (!isLastWeek) return week;
+
+    let hasChanged = false;
+    const updatedDays = { ...week.days };
+
+    for (const key of ['sunday', 'saturday'] as Array<keyof TrainingWeek['days']>) {
+      const day = updatedDays[key];
+      if (!day) continue;
+
+      const titleLower = (day.title || '').toLowerCase();
+      const detailsLower = (day.details || '').toLowerCase();
+
+      if (
+        detailsLower.includes('race day') ||
+        titleLower.includes('race day') ||
+        (day.type === 'long_run' && (detailsLower.includes('🎯 race') || detailsLower.includes('race')))
+      ) {
+        if (day.type !== 'race' || titleLower.includes('long run')) {
+          hasChanged = true;
+          let eventTitle = day.title;
+          if (titleLower.includes('long run') || !titleLower.includes('race day')) {
+            const dist = day.plannedKm;
+            if (dist >= 40) {
+              eventTitle = 'MARATHON RACE DAY! 🏁';
+            } else if (dist >= 20 && dist <= 25) {
+              eventTitle = 'HALF MARATHON RACE DAY! 🏁';
+            } else if (dist >= 9 && dist <= 11) {
+              eventTitle = '10K RACE DAY! 🏁';
+            } else if (dist >= 4 && dist <= 6) {
+              eventTitle = '5K RACE DAY! 🏁';
+            } else if (dist > 0) {
+              eventTitle = `${dist} km RACE DAY! 🏁`;
+            } else {
+              eventTitle = 'RACE DAY! 🏁';
+            }
+          }
+
+          updatedDays[key] = {
+            ...day,
+            type: 'race',
+            title: eventTitle,
+            subtype: day.subtype && day.subtype !== 'Long Run' ? day.subtype : 'Goal Race',
+          };
+        }
+      }
+    }
+
+    if (hasChanged) {
+      return {
+        ...week,
+        days: updatedDays,
+      };
+    }
+    return week;
+  });
+}
+
+const DEFAULT_PLAN: TrainingWeek[] = sanitizePlanRaceDays(INITIAL_PLAN);
 
 const DEFAULT_META: PlanMetadata = {
   title: '18-Week Marathon Training Plan',
@@ -44,7 +107,7 @@ export default function App() {
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].days) {
-          return parsed;
+          return sanitizePlanRaceDays(parsed);
         }
       } catch (e) {
         console.error('Failed to parse saved plan:', e);
@@ -116,7 +179,7 @@ export default function App() {
       raceDate?: string;
     }
   ) => {
-    setPlan(newPlan);
+    setPlan(sanitizePlanRaceDays(newPlan));
     setPlanMeta({
       title: meta.title,
       goalPace: meta.goalPace ? `Goal ${meta.goalPace}` : 'Custom Goal',
@@ -127,7 +190,7 @@ export default function App() {
 
   // Import CSV Plan
   const handleImportCsv = (importedPlan: TrainingWeek[]) => {
-    setPlan(importedPlan);
+    setPlan(sanitizePlanRaceDays(importedPlan));
     setPlanMeta({
       title: `${importedPlan.length}-Week Training Plan`,
       goalPace: 'Custom Schedule',
@@ -138,7 +201,7 @@ export default function App() {
 
   // Import JSON backup
   const handleImportJson = (importedPlan: TrainingWeek[]) => {
-    setPlan(importedPlan);
+    setPlan(sanitizePlanRaceDays(importedPlan));
     setPlanMeta({
       title: `${importedPlan.length}-Week Training Plan`,
       goalPace: 'Custom Schedule',
